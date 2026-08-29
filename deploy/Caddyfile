@@ -21,9 +21,22 @@
 		file_server browse
 	}
 
-	# Todo o resto é o site (MyAAC).
-	handle {
+	# API do site novo.
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	# MyAAC, agora num subcaminho: cuida de criacao de conta e do painel
+	# administrativo ate a API assumir essas partes. handle_path remove o
+	# prefixo, entao o MyAAC continua vendo os caminhos que espera.
+	redir /aac /aac/
+	handle_path /aac/* {
 		reverse_proxy myaac:80
+	}
+
+	# Todo o resto e o site em React.
+	handle {
+		reverse_proxy web:80
 	}
 
 	log {

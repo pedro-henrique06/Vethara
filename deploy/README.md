@@ -158,6 +158,33 @@ arquivo certo:
 sha256sum vethara-client.zip
 ```
 
+## Site: React + API .NET
+
+O site publico e um projeto React (`web/`) consumindo uma API em ASP.NET Core
+(`api/`). O MyAAC continua rodando, mas agora responde em `/aac` — e ele que ainda
+cuida da criacao de conta e do painel administrativo.
+
+Roteamento no Caddy:
+
+| Caminho | Destino |
+| --- | --- |
+| `/` | React |
+| `/api/*` | API .NET |
+| `/aac` | MyAAC |
+| `/login` | login-server |
+| `/download` | arquivos do client |
+
+**Ao subir pela primeira vez**, ajuste o endereco do MyAAC no `.env`, senao os links
+internos dele apontam para a raiz, que agora e o React:
+
+```bash
+sed -i 's|^MYAAC_SITE_URL=.*|MYAAC_SITE_URL=https://vethara.com.br/aac|' docker/.env
+bash deploy/subir.sh
+```
+
+Os dois projetos compilam dentro do Docker: o VPS nao precisa de SDK do .NET nem de
+Node instalados.
+
 ## Acessar o banco de uma ferramenta grafica
 
 O banco escuta apenas em `127.0.0.1` dentro do VPS — de fora continua inalcancavel.

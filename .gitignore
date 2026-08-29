@@ -34,3 +34,9 @@ logs/
 
 # Pacote do client servido pelo VPS — grande e reconstruivel
 /download/
+
+# Site
+node_modules/
+dist/
+bin/
+obj/

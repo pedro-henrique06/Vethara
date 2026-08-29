@@ -86,6 +86,28 @@ primeira execução (~395 MB, do repositório `dudantas/tibia-client`); basta ac
 
 ---
 
+## Site
+
+| Pasta | O que é |
+| --- | --- |
+| `web/` | React + Vite. Gera arquivos estáticos, servidos por nginx atrás do Caddy |
+| `api/` | ASP.NET Core Minimal API, lê o MariaDB com MySqlConnector |
+
+Desenvolvimento local:
+
+```bash
+cd api && dotnet run                    # API em http://localhost:8080
+cd web && npm install && npm run dev    # front em http://localhost:5173
+```
+
+O Vite encaminha `/api` para a API local, então o front se comporta igual ao de produção.
+Em produção os dois viram containers e o Caddy roteia por caminho — mesma origem, sem CORS.
+
+O MyAAC continua no ar em `/aac`, cuidando de criação de conta e do painel administrativo
+até a API assumir essas partes.
+
+---
+
 ## Ferramentas (`dev/`)
 
 Testam o servidor no nível de protocolo, sem abrir client gráfico. Úteis para separar
