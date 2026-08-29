@@ -63,16 +63,17 @@ if ENABLE_SERVERS then
     --
     Servers_init = {
 
-        -- Producao. O Caddy termina o HTTPS na 443 e encaminha /login para o
-        -- login-server; o mundo em si continua na 7172, em TCP puro.
+        -- Producao. httpLogin=false e o que ativa o TLS: no codigo do client esse
+        -- campo escolhe httplib::Client (HTTP puro) quando true, e SSLClient quando
+        -- false. Com true na 443 o Caddy responde 400 "HTTP request to an HTTPS server".
         ["https://vethara.com.br/login"] = {
             port = 443,
             protocol = 1525,
-            httpLogin = true,
+            httpLogin = false,
             useAuthenticator = false
         },
 
-        -- Stack local via docker, para testar antes de publicar.
+        -- Stack local via docker: sem TLS, entao aqui true e o correto.
         ["http://127.0.0.1:8088/login"] = {
             port = 8088,
             protocol = 1525,
