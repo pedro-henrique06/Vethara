@@ -30,7 +30,7 @@ Resumo:
 ```bash
 git clone git@github.com:pedro-henrique06/Vethara.git && cd Vethara
 bash deploy/gerar-env.sh vethara.com.br
-docker compose -f docker/docker-compose.yml -f deploy/docker-compose.prod.yml up -d
+bash deploy/subir.sh
 bash deploy/trocar-senha-god.sh
 ```
 

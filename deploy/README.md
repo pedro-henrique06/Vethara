@@ -42,20 +42,23 @@ registre um domínio e rode o script de novo.
 
 ## 3. Subir
 
-**Com domínio** — inclui o Caddy e o HTTPS:
-
 ```bash
-docker compose -f docker/docker-compose.yml -f deploy/docker-compose.prod.yml up -d
+bash deploy/subir.sh
 ```
 
-**Só com IP** — sem o Caddy:
+O script confere a configuração antes de subir e escolhe os arquivos de compose
+sozinho: com `VETHARA_DOMAIN` no `.env` ele inclui o Caddy e o HTTPS; sem domínio,
+sobe só o base.
+
+Ele **recusa** subir se encontrar servidor anunciando `127.0.0.1`, contas de teste
+abertas ou senhas padrão. Um `docker compose up` direto não avisa nada disso — o
+servidor sobe, o site abre, e nenhum jogador consegue entrar.
+
+Para ambiente local, sem jogadores, dá para ignorar os avisos:
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+bash deploy/subir.sh --forcar
 ```
-
-A sobreposição de produção fixa as imagens por digest e põe o Caddy na frente, com
-HTTPS automático.
 
 Acompanhe a primeira subida — ela baixa o mapa:
 
