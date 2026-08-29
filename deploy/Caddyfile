@@ -12,7 +12,11 @@
 
 	# Download do client. Os arquivos ficam em ~/Vethara/download no VPS e nao
 	# entram no git: o zip tem dezenas de MB e o exe e reconstruivel.
-	handle /download* {
+	#
+	# handle_path (e nao handle) porque o prefixo precisa sair da URL: com "handle",
+	# o pedido /download/arquivo.zip vira /srv/download/download/arquivo.zip e da 404.
+	redir /download /download/
+	handle_path /download/* {
 		root * /srv/download
 		file_server browse
 	}
