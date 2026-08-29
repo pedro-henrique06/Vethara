@@ -77,22 +77,32 @@ bash deploy/trocar-senha-god.sh
 A conta `@god` vem com a senha `god` e poder total. **Não é conta de teste** — ela existe
 mesmo com `CANARY_TEST_ACCOUNTS=false`, porque vem do schema do próprio Canary.
 
-## 5. Fechar as portas internas
+## 5. Firewall
 
-O compose base publica 8080 (site), 8088 e 9090 (login). Em produção elas não precisam
-ficar abertas: o Caddy fala com esses serviços pela rede interna do Docker.
+As portas do site e do login **já não são publicadas** pela sobreposição de produção:
+elas ficam em `127.0.0.1` e o Caddy fala com os serviços pela rede interna do Docker.
+Isso não depende de firewall — e é de propósito, porque **o Docker escreve direto no
+iptables e passa por cima do ufw**. Porta publicada fica aberta mesmo com o ufw ligado.
+
+Ainda assim, feche o resto:
 
 ```bash
 sudo ufw default deny incoming
-sudo ufw allow 22/tcp                  # SSH — não se tranque para fora
-sudo ufw allow 80,443/tcp              # site e login, via Caddy
-sudo ufw allow 7171:7175/tcp           # jogo
+sudo ufw allow 22/tcp          # SSH — não se tranque para fora
+sudo ufw allow 80,443/tcp      # site e login, via Caddy
+sudo ufw allow 7171:7175/tcp   # jogo
 sudo ufw enable
 ```
 
-> O Docker costuma escrever direto no iptables e passar por cima do ufw. Depois de
-> habilitar, **confirme de fora** que 8080 e 8088 estão fechadas:
-> `nmap -Pn -p 8080,8088,9090 vethara.com.br`
+### Confirme de fora
+
+Do seu PC, não do VPS. No Windows, sem instalar nada:
+
+```powershell
+8080,8088,9090 | ForEach-Object { Test-NetConnection vethara.com.br -Port $_ }
+```
+
+`TcpTestSucceeded : False` nas três é o resultado correto.
 
 ## 6. Backup
 
