@@ -63,8 +63,16 @@ if ENABLE_SERVERS then
     --
     Servers_init = {
 
-        -- Servidor local do Vethara (stack Canary via docker).
-        -- O login-server responde em 8088; o mundo roda em 7172.
+        -- Producao. O Caddy termina o HTTPS na 443 e encaminha /login para o
+        -- login-server; o mundo em si continua na 7172, em TCP puro.
+        ["https://vethara.com.br/login"] = {
+            port = 443,
+            protocol = 1525,
+            httpLogin = true,
+            useAuthenticator = false
+        },
+
+        -- Stack local via docker, para testar antes de publicar.
         ["http://127.0.0.1:8088/login"] = {
             port = 8088,
             protocol = 1525,

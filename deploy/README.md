@@ -19,7 +19,7 @@ cd Vethara
 ## 2. Gerar o `.env` com senhas fortes
 
 ```bash
-bash deploy/gerar-env.sh SEU_DOMINIO.com
+bash deploy/gerar-env.sh vethara.com.br
 ```
 
 O script gera senhas aleatórias, desativa as contas de teste e grava `docker/.env` com
@@ -89,7 +89,7 @@ sudo ufw enable
 
 > O Docker costuma escrever direto no iptables e passar por cima do ufw. Depois de
 > habilitar, **confirme de fora** que 8080 e 8088 estão fechadas:
-> `nmap -Pn -p 8080,8088,9090 SEU_DOMINIO.com`
+> `nmap -Pn -p 8080,8088,9090 vethara.com.br`
 
 ## 6. Backup
 
@@ -108,7 +108,7 @@ pior que nenhum.
 No `init.lua` do client, troque o endereço local pelo seu domínio:
 
 ```lua
-["https://SEU_DOMINIO.com/login"] = {
+["https://vethara.com.br/login"] = {
     port = 443,
     protocol = 1525,
     httpLogin = true
