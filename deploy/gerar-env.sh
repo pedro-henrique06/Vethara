@@ -41,14 +41,33 @@ troca CANARY_DB_PASSWORD   "$DB_PASS"
 troca CANARY_DB_ROOT_PASSWORD "$DB_ROOT"
 troca CANARY_TEST_ACCOUNTS "false"
 troca MYAAC_ADMIN_PASSWORD "$AAC_PASS"
-troca MYAAC_SITE_URL       "https://$DOMINIO"
+# Sem dominio nao ha HTTPS: nao existe certificado para endereco IP.
+if [[ "$DOMINIO" =~ ^[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+	EH_IP=1
+	troca MYAAC_SITE_URL "http://$DOMINIO:8080"
+else
+	EH_IP=0
+	troca MYAAC_SITE_URL "https://$DOMINIO"
+fi
 
-# Lido pelo Caddy na sobreposicao de producao.
-if ! grep -q '^VETHARA_DOMAIN=' "$DESTINO"; then
+# Lido pelo Caddy na sobreposicao de producao. So faz sentido com dominio.
+if [[ "$EH_IP" -eq 0 ]] && ! grep -q '^VETHARA_DOMAIN=' "$DESTINO"; then
 	printf '\n# Dominio usado pelo Caddy para emitir o certificado HTTPS\nVETHARA_DOMAIN=%s\n' "$DOMINIO" >>"$DESTINO"
 fi
 
 chmod 600 "$DESTINO"
+
+if [[ "$EH_IP" -eq 1 ]]; then
+	AVISO_HTTPS=$(cat <<'AV'
+ATENCAO: sem dominio nao ha HTTPS. As senhas dos jogadores trafegam em texto claro
+entre o client e o login-server. Serve para testar; antes de abrir para jogadores de
+verdade, registre um dominio e rode este script novamente.
+
+AV
+)
+else
+	AVISO_HTTPS=""
+fi
 
 cat <<FIM
 
@@ -62,6 +81,7 @@ cat <<FIM
 
 Anote essas senhas num gerenciador AGORA. Elas nao aparecem em outro lugar.
 
+${AVISO_HTTPS}
 FALTA UM PASSO: a conta @god ainda esta com a senha padrao "god".
 Rode, depois de subir o stack:
 

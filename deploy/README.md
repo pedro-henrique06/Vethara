@@ -27,10 +27,31 @@ permissão `600`. **As senhas aparecem na tela uma única vez** — guarde num g
 
 Elas nascem no VPS de propósito: nunca passam por chat, e-mail ou git.
 
+### Sem domínio ainda?
+
+Passe o IP público do VPS no lugar do domínio. Descubra qual é com:
+
+```bash
+curl -4 ifconfig.me
+```
+
+O script detecta que é um IP e ajusta o site para `http://IP:8080`. Nesse caminho **não
+há HTTPS** — não existe certificado para endereço IP — então as senhas dos jogadores
+trafegam em texto claro. Serve para testar; antes de abrir para jogadores de verdade,
+registre um domínio e rode o script de novo.
+
 ## 3. Subir
+
+**Com domínio** — inclui o Caddy e o HTTPS:
 
 ```bash
 docker compose -f docker/docker-compose.yml -f deploy/docker-compose.prod.yml up -d
+```
+
+**Só com IP** — sem o Caddy:
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 A sobreposição de produção fixa as imagens por digest e põe o Caddy na frente, com
