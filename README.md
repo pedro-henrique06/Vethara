@@ -21,6 +21,19 @@ docker compose up -d
 
 O `.env` **não está versionado** (contém senhas). Crie-o a partir do `.env.dist` em cada máquina.
 
+## Deploy em VPS
+
+O passo a passo completo — HTTPS, firewall, backup — está em **[deploy/README.md](deploy/README.md)**.
+
+Resumo:
+
+```bash
+git clone git@github.com:pedro-henrique06/Vethara.git && cd Vethara
+bash deploy/gerar-env.sh SEU_DOMINIO.com
+docker compose -f docker/docker-compose.yml -f deploy/docker-compose.prod.yml up -d
+bash deploy/trocar-senha-god.sh
+```
+
 ### Antes de expor na internet
 
 O `docker/DOCKER.md` do upstream é explícito: a configuração padrão é para uso local. Antes de

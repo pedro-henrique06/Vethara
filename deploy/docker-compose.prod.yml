@@ -1,0 +1,44 @@
+# Sobreposição de produção. Use SEMPRE junto com o compose base:
+#
+#   docker compose -f docker/docker-compose.yml -f deploy/docker-compose.prod.yml up -d
+#
+# O que muda em relação ao base:
+#   - imagem do servidor fixada por digest (o base usa :latest, que troca sozinho)
+#   - Caddy na frente, com HTTPS automático via Let's Encrypt
+#
+# As portas 8080/8088/9090 continuam publicadas pelo compose base. Bloqueie-as no
+# firewall do VPS — o Caddy fala com os serviços pela rede interna do Docker, sem
+# precisar delas expostas. As regras estão no README.
+
+services:
+  server:
+    # Fixado no digest que validamos. Para atualizar de propósito:
+    #   docker compose pull server && docker compose up -d server
+    # e então troque o digest aqui.
+    image: ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c2c6ec53618b3fed6f552762
+
+  login-server:
+    image: opentibiabr/login-server@sha256:41a47cb190be3bf35d1344b2f51c543071f16787c3d4f0f7e330e9a9d0618f49
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      VETHARA_DOMAIN: "${VETHARA_DOMAIN:?defina VETHARA_DOMAIN no .env}"
+    volumes:
+      - '../deploy/Caddyfile:/etc/caddy/Caddyfile:ro'
+      - 'caddy-data:/data'
+      - 'caddy-config:/config'
+    networks:
+      - canary-net
+    depends_on:
+      - myaac
+      - login-server
+
+volumes:
+  caddy-data:
+  caddy-config:

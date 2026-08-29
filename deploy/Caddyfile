@@ -1,0 +1,24 @@
+# HTTPS automático via Let's Encrypt. O Caddy cuida do certificado e da renovação
+# sozinho — o único requisito é o domínio já apontar para o IP do VPS antes de subir.
+
+{$VETHARA_DOMAIN} {
+	encode gzip
+
+	# O client 13+ não conecta por IP: ele faz POST no login web service.
+	# Este é o endereço que vai no init.lua do client.
+	handle /login* {
+		reverse_proxy login-server:8088
+	}
+
+	# Todo o resto é o site (MyAAC).
+	handle {
+		reverse_proxy myaac:80
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
