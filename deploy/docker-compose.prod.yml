@@ -18,6 +18,13 @@ services:
     # e então troque o digest aqui.
     image: ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c2c6ec53618b3fed6f552762
 
+  # O banco nao e publicado pelo compose base. Aqui ele passa a escutar apenas em
+  # 127.0.0.1 do VPS, o suficiente para um tunel SSH (DBeaver e afins). De fora
+  # continua inalcancavel: quem quiser conectar precisa antes ter acesso SSH.
+  db:
+    ports:
+      - '127.0.0.1:${CANARY_DB_PORT:-3306}:3306'
+
   login-server:
     image: opentibiabr/login-server@sha256:41a47cb190be3bf35d1344b2f51c543071f16787c3d4f0f7e330e9a9d0618f49
     # !override troca a lista inteira; sem ele o compose soma as duas e a porta

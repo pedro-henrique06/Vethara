@@ -158,6 +158,28 @@ arquivo certo:
 sha256sum vethara-client.zip
 ```
 
+## Acessar o banco de uma ferramenta grafica
+
+O banco escuta apenas em `127.0.0.1` dentro do VPS — de fora continua inalcancavel.
+Para usar DBeaver, HeidiSQL ou similar, abra um tunel SSH do seu PC:
+
+```powershell
+ssh -L 3307:127.0.0.1:3306 tibia@vethara.com.br
+```
+
+Deixe essa janela aberta e conecte a ferramenta em:
+
+| Campo | Valor |
+| --- | --- |
+| Host | `127.0.0.1` |
+| Porta | `3307` |
+| Banco | `canary` |
+| Usuario / senha | os de `CANARY_DB_USER` e `CANARY_DB_PASSWORD` no `.env` |
+
+> **Cuidado ao editar personagens.** O Canary mantem o jogador em memoria e grava no
+> banco no logout. Alterar um personagem online faz o servidor sobrescrever a mudanca
+> quando ele sair. Edite com o jogador offline, ou use comandos de GM no jogo.
+
 ---
 
 ## Atualizar o servidor depois
