@@ -128,6 +128,36 @@ No `init.lua` do client, troque o endereço local pelo seu domínio:
 }
 ```
 
+## 8. Publicar o client para os jogadores
+
+O client nao entra no git: o zip tem dezenas de MB e o executavel e reconstruivel.
+Ele e servido pelo proprio VPS, em `https://vethara.com.br/download`.
+
+Gere o pacote na maquina onde voce compila — so os arquivos versionados do OTClient
+mais o `otclient.exe`, sem os assets da CipSoft, que o client baixa sozinho:
+
+```bash
+cd client-modern
+git archive HEAD | tar -x -C /tmp/vethara-client
+cp otclient.exe init.lua /tmp/vethara-client/
+# compacte /tmp/vethara-client como vethara-client.zip
+```
+
+Envie para o VPS:
+
+```bash
+ssh tibia@vethara.com.br "mkdir -p ~/Vethara/download"
+scp vethara-client.zip tibia@vethara.com.br:~/Vethara/download/
+```
+
+O Caddy passa a servir o arquivo assim que ele aparece na pasta — nao precisa
+reiniciar nada. Publique o **SHA-256** junto, para o jogador conferir que baixou o
+arquivo certo:
+
+```bash
+sha256sum vethara-client.zip
+```
+
 ---
 
 ## Atualizar o servidor depois

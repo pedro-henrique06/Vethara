@@ -31,3 +31,6 @@ vcpkg_installed/
 # Logs e temporários
 *.log
 logs/
+
+# Pacote do client servido pelo VPS — grande e reconstruivel
+/download/

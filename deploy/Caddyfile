@@ -10,6 +10,13 @@
 		reverse_proxy login-server:8088
 	}
 
+	# Download do client. Os arquivos ficam em ~/Vethara/download no VPS e nao
+	# entram no git: o zip tem dezenas de MB e o exe e reconstruivel.
+	handle /download* {
+		root * /srv/download
+		file_server browse
+	}
+
 	# Todo o resto é o site (MyAAC).
 	handle {
 		reverse_proxy myaac:80

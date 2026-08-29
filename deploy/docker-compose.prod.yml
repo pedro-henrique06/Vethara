@@ -40,6 +40,7 @@ services:
       VETHARA_DOMAIN: "${VETHARA_DOMAIN:?defina VETHARA_DOMAIN no .env}"
     volumes:
       - '../deploy/Caddyfile:/etc/caddy/Caddyfile:ro'
+      - '../download:/srv/download:ro'
       - 'caddy-data:/data'
       - 'caddy-config:/config'
     networks:
