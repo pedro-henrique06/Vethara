@@ -1,0 +1,273 @@
+warning: in the working copy of 'src/connection.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/connection.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/globalevent.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/luaglobalevent.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/protocol.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/scheduler.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/scheduler.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/script.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/server.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/server.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/signals.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/signals.h', LF will be replaced by CRLF the next time Git touches it
+diff --git a/src/connection.cpp b/src/connection.cpp
+index dddbf7f..bba52dd 100644
+--- a/src/connection.cpp
++++ b/src/connection.cpp
+@@ -11,7 +11,7 @@
+ #include "scheduler.h"
+ #include "server.h"
+ 
+-Connection_ptr ConnectionManager::createConnection(boost::asio::io_service& io_service,
++Connection_ptr ConnectionManager::createConnection(boost::asio::io_context& io_service,
+                                                    ConstServicePort_ptr servicePort)
+ {
+ 	std::lock_guard<std::mutex> lockClass(connectionManagerLock);
+@@ -96,7 +96,7 @@ void Connection::accept()
+ {
+ 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
+ 	try {
+-		readTimer.expires_from_now(std::chrono::seconds(CONNECTION_READ_TIMEOUT));
++		readTimer.expires_after(std::chrono::seconds(CONNECTION_READ_TIMEOUT));
+ 		readTimer.async_wait(
+ 		    [thisPtr = std::weak_ptr<Connection>(shared_from_this())](const boost::system::error_code& error) {
+ 			    Connection::handleTimeout(thisPtr, error);
+@@ -145,7 +145,7 @@ void Connection::parseHeader(const boost::system::error_code& error)
+ 	}
+ 
+ 	try {
+-		readTimer.expires_from_now(std::chrono::seconds(CONNECTION_READ_TIMEOUT));
++		readTimer.expires_after(std::chrono::seconds(CONNECTION_READ_TIMEOUT));
+ 		readTimer.async_wait(
+ 		    [thisPtr = std::weak_ptr<Connection>(shared_from_this())](const boost::system::error_code& error) {
+ 			    Connection::handleTimeout(thisPtr, error);
+@@ -213,7 +213,7 @@ void Connection::parsePacket(const boost::system::error_code& error)
+ 	}
+ 
+ 	try {
+-		readTimer.expires_from_now(std::chrono::seconds(CONNECTION_READ_TIMEOUT));
++		readTimer.expires_after(std::chrono::seconds(CONNECTION_READ_TIMEOUT));
+ 		readTimer.async_wait(
+ 		    [thisPtr = std::weak_ptr<Connection>(shared_from_this())](const boost::system::error_code& error) {
+ 			    Connection::handleTimeout(thisPtr, error);
+@@ -249,7 +249,7 @@ void Connection::internalSend(const OutputMessage_ptr& msg)
+ {
+ 	protocol->onSendMessage(msg);
+ 	try {
+-		writeTimer.expires_from_now(std::chrono::seconds(CONNECTION_WRITE_TIMEOUT));
++		writeTimer.expires_after(std::chrono::seconds(CONNECTION_WRITE_TIMEOUT));
+ 		writeTimer.async_wait(
+ 		    [thisPtr = std::weak_ptr<Connection>(shared_from_this())](const boost::system::error_code& error) {
+ 			    Connection::handleTimeout(thisPtr, error);
+@@ -277,7 +277,7 @@ uint32_t Connection::getIP()
+ 		return 0;
+ 	}
+ 
+-	return htonl(endpoint.address().to_v4().to_ulong());
++	return htonl(endpoint.address().to_v4().to_uint());
+ }
+ 
+ void Connection::onWriteOperation(const boost::system::error_code& error)
+diff --git a/src/connection.h b/src/connection.h
+index c3d2f73..6fbe8ec 100644
+--- a/src/connection.h
++++ b/src/connection.h
+@@ -33,7 +33,7 @@ public:
+ 		return instance;
+ 	}
+ 
+-	Connection_ptr createConnection(boost::asio::io_service& io_service, ConstServicePort_ptr servicePort);
++	Connection_ptr createConnection(boost::asio::io_context& io_service, ConstServicePort_ptr servicePort);
+ 	void releaseConnection(const Connection_ptr& connection);
+ 	void closeAll();
+ 
+@@ -56,7 +56,7 @@ public:
+ 		FORCE_CLOSE = true
+ 	};
+ 
+-	Connection(boost::asio::io_service& io_service, ConstServicePort_ptr service_port) :
++	Connection(boost::asio::io_context& io_service, ConstServicePort_ptr service_port) :
+ 	    readTimer(io_service),
+ 	    writeTimer(io_service),
+ 	    service_port(std::move(service_port)),
+diff --git a/src/globalevent.cpp b/src/globalevent.cpp
+index 25fe456..797f966 100644
+--- a/src/globalevent.cpp
++++ b/src/globalevent.cpp
+@@ -267,7 +267,7 @@ bool GlobalEvent::configureEvent(const pugi::xml_node& node)
+ 		}
+ 
+ 		time_t current_time = time(nullptr);
+-		struct tm timeinfo = fmt::localtime(current_time);
++		struct tm timeinfo = *localtime(&current_time);
+ 		timeinfo.tm_hour = hour;
+ 		timeinfo.tm_min = min;
+ 		timeinfo.tm_sec = sec;
+diff --git a/src/luaglobalevent.cpp b/src/luaglobalevent.cpp
+index ce56c90..e988b86 100644
+--- a/src/luaglobalevent.cpp
++++ b/src/luaglobalevent.cpp
+@@ -140,7 +140,7 @@ int luaGlobalEventTime(lua_State* L)
+ 		}
+ 
+ 		time_t current_time = time(nullptr);
+-		struct tm timeinfo = fmt::localtime(current_time);
++		struct tm timeinfo = *localtime(&current_time);
+ 		timeinfo.tm_hour = hour;
+ 		timeinfo.tm_min = min;
+ 		timeinfo.tm_sec = sec;
+diff --git a/src/protocol.cpp b/src/protocol.cpp
+index ed4fdcf..8c18388 100644
+--- a/src/protocol.cpp
++++ b/src/protocol.cpp
+@@ -99,7 +99,7 @@ uint32_t Protocol::getIP(std::string_view s) const
+ {
+ 	boost::system::error_code error;
+ 	if (auto ip = boost::asio::ip::make_address_v4(s, error); !error) {
+-		return htonl(ip.to_ulong());
++		return htonl(ip.to_uint());
+ 	}
+ 
+ 	return 0;
+diff --git a/src/scheduler.cpp b/src/scheduler.cpp
+index 2e2acc1..bd59de6 100644
+--- a/src/scheduler.cpp
++++ b/src/scheduler.cpp
+@@ -17,7 +17,7 @@ uint32_t Scheduler::addEvent(SchedulerTask* task)
+ 		auto it = eventIdTimerMap.emplace(task->getEventId(), boost::asio::steady_timer{io_context});
+ 		auto& timer = it.first->second;
+ 
+-		timer.expires_from_now(std::chrono::milliseconds(task->getDelay()));
++		timer.expires_after(std::chrono::milliseconds(task->getDelay()));
+ 		timer.async_wait([this, task](const boost::system::error_code& error) {
+ 			eventIdTimerMap.erase(task->getEventId());
+ 
+diff --git a/src/scheduler.h b/src/scheduler.h
+index e13ecfc..25a32cb 100644
+--- a/src/scheduler.h
++++ b/src/scheduler.h
+@@ -5,6 +5,7 @@
+ #define FS_SCHEDULER_H
+ 
+ #include "tasks.h"
++#include <boost/asio/executor_work_guard.hpp>
+ #include "thread_holder_base.h"
+ 
+ inline constexpr int32_t SCHEDULER_MINTICKS = 50;
+@@ -42,7 +43,7 @@ private:
+ 	std::atomic<uint32_t> lastEventId{0};
+ 	std::unordered_map<uint32_t, boost::asio::steady_timer> eventIdTimerMap;
+ 	boost::asio::io_context io_context;
+-	boost::asio::io_context::work work{io_context};
++	boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work{boost::asio::make_work_guard(io_context)};
+ };
+ 
+ extern Scheduler g_scheduler;
+diff --git a/src/script.cpp b/src/script.cpp
+index 6a2de4c..3b4561f 100644
+--- a/src/script.cpp
++++ b/src/script.cpp
+@@ -8,6 +8,7 @@
+ #include "configmanager.h"
+ 
+ #include <fmt/color.h>
++#include <fmt/ranges.h>
+ 
+ extern LuaEnvironment g_luaEnvironment;
+ 
+diff --git a/src/server.cpp b/src/server.cpp
+index 7941490..0d28b92 100644
+--- a/src/server.cpp
++++ b/src/server.cpp
+@@ -4,6 +4,7 @@
+ #include "otpch.h"
+ 
+ #include "server.h"
++#include <boost/asio/post.hpp>
+ 
+ #include "ban.h"
+ #include "configmanager.h"
+@@ -33,7 +34,7 @@ void ServiceManager::stop()
+ 
+ 	for (auto& servicePortIt : acceptors) {
+ 		try {
+-			io_service.post([servicePort = servicePortIt.second]() { servicePort->onStopServer(); });
++			boost::asio::post(io_service, [servicePort = servicePortIt.second]() { servicePort->onStopServer(); });
+ 		} catch (boost::system::system_error& e) {
+ 			std::cout << "[ServiceManager::stop] Network Error: " << e.what() << std::endl;
+ 		}
+@@ -41,7 +42,7 @@ void ServiceManager::stop()
+ 
+ 	acceptors.clear();
+ 
+-	death_timer.expires_from_now(std::chrono::seconds(3));
++	death_timer.expires_after(std::chrono::seconds(3));
+ 	death_timer.async_wait([this](const boost::system::error_code&) { die(); });
+ }
+ 
+@@ -144,7 +145,7 @@ void ServicePort::open(uint16_t port)
+ 		if (getBoolean(ConfigManager::BIND_ONLY_GLOBAL_ADDRESS)) {
+ 			acceptor.reset(new boost::asio::ip::tcp::acceptor(
+ 			    io_service,
+-			    boost::asio::ip::tcp::endpoint(boost::asio::ip::address(boost::asio::ip::address_v4::from_string(
++			    boost::asio::ip::tcp::endpoint(boost::asio::ip::address(boost::asio::ip::make_address_v4(
+ 			                                       std::string{getString(ConfigManager::IP)})),
+ 			                                   serverPort)));
+ 		} else {
+diff --git a/src/server.h b/src/server.h
+index e3d1a55..4c45f9d 100644
+--- a/src/server.h
++++ b/src/server.h
+@@ -39,7 +39,7 @@ public:
+ class ServicePort : public std::enable_shared_from_this<ServicePort>
+ {
+ public:
+-	explicit ServicePort(boost::asio::io_service& io_service) : io_service(io_service) {}
++	explicit ServicePort(boost::asio::io_context& io_service) : io_service(io_service) {}
+ 	~ServicePort();
+ 
+ 	// non-copyable
+@@ -61,7 +61,7 @@ public:
+ private:
+ 	void accept();
+ 
+-	boost::asio::io_service& io_service;
++	boost::asio::io_context& io_service;
+ 	std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor;
+ 	std::vector<Service_ptr> services;
+ 
+@@ -92,7 +92,7 @@ private:
+ 
+ 	std::unordered_map<uint16_t, ServicePort_ptr> acceptors;
+ 
+-	boost::asio::io_service io_service;
++	boost::asio::io_context io_service;
+ 	Signals signals{io_service};
+ 	boost::asio::steady_timer death_timer{io_service};
+ 	bool running = false;
+diff --git a/src/signals.cpp b/src/signals.cpp
+index 7923e08..4fbdb98 100644
+--- a/src/signals.cpp
++++ b/src/signals.cpp
+@@ -159,7 +159,7 @@ void dispatchSignalHandler(int signal)
+ 
+ } // namespace
+ 
+-Signals::Signals(boost::asio::io_service& service) : set(service)
++Signals::Signals(boost::asio::io_context& service) : set(service)
+ {
+ 	set.add(SIGINT);
+ 	set.add(SIGTERM);
+diff --git a/src/signals.h b/src/signals.h
+index 95aee87..f4acb74 100644
+--- a/src/signals.h
++++ b/src/signals.h
+@@ -11,7 +11,7 @@ class Signals
+ 	boost::asio::signal_set set;
+ 
+ public:
+-	explicit Signals(boost::asio::io_service& service);
++	explicit Signals(boost::asio::io_context& service);
+ 
+ private:
+ 	void asyncWait();

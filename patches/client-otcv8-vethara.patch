@@ -1,0 +1,92 @@
+diff --git a/init.lua b/init.lua
+index e2abdc6..d51ee00 100644
+--- a/init.lua
++++ b/init.lua
+@@ -1,27 +1,21 @@
+ -- CONFIG
+-APP_NAME = "otclientv8"  -- important, change it, it's name for config dir and files in appdata
++APP_NAME = "vethara"  -- important, change it, it's name for config dir and files in appdata
+ APP_VERSION = 1341       -- client version for updater and login to identify outdated client
+ DEFAULT_LAYOUT = "retro" -- on android it's forced to "mobile", check code bellow
+ 
+ -- If you don't use updater or other service, set it to updater = ""
+ Services = {
+-  website = "http://otclient.ovh", -- currently not used
+-  updater = "http://otclient.ovh/api/updater.php",
++  website = "",
++  updater = "",
+   stats = "",
+-  crash = "http://otclient.ovh/api/crash.php",
+-  feedback = "http://otclient.ovh/api/feedback.php",
+-  status = "http://otclient.ovh/api/status.php"
++  crash = "",
++  feedback = "",
++  status = ""
+ }
+ 
+ -- Servers accept http login url, websocket login url or ip:port:version
+ Servers = {
+---[[  OTClientV8 = "http://otclient.ovh/api/login.php",
+-  OTClientV8proxy = "http://otclient.ovh/api/login.php?proxy=1",
+-  OTClientV8c = "otclient.ovh:7171:1099:25:30:80:90",
+-  OTClientV8Test = "http://otclient.ovh/api/login2.php",
+-  Evoulinia = "evolunia.net:7171:1098",
+-  GarneraTest = "garnera-global.net:7171:1100",
+-  LocalTestServ = "127.0.0.1:7171:1098:110:30:93"  ]]
++  Vethara = "127.0.0.1:7171:860"
+ }
+ 
+ --Server = "ws://otclient.ovh:3000/"
+@@ -29,7 +23,7 @@ Servers = {
+ --USE_NEW_ENERGAME = true -- uses entergamev2 based on websockets instead of entergame
+ ALLOW_CUSTOM_SERVERS = true -- if true it shows option ANOTHER on server list
+ 
+-g_app.setName("OTCv8")
++g_app.setName("Vethara")
+ -- CONFIG END
+ 
+ -- print first terminal message
+diff --git a/vc16/otclient.vcxproj b/vc16/otclient.vcxproj
+index 270a1ad..bf263e6 100644
+--- a/vc16/otclient.vcxproj
++++ b/vc16/otclient.vcxproj
+@@ -255,7 +255,7 @@
+     <Lib>
+       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+       <AdditionalDependencies>$(ProjectDir)angle\lib\libGLESv2.dll.lib;$(ProjectDir)angle\lib\libEGL.dll.lib;vorbis.lib;ogg.lib;bz2d.lib;zip.lib;libssl.lib;OpenAL32.lib;lzma.lib;vorbisfile.lib;zlibd.lib;libcrypto.lib;physfs-static.lib;lua51.lib</AdditionalDependencies>
+-      <AdditionalLibraryDirectories>D:\a\otclient\vcpkg\installed\x86-windows-static\debug\lib</AdditionalLibraryDirectories>
++      <AdditionalLibraryDirectories>C:\Repo\vcpkg-2019\installed\x86-windows-static\lib</AdditionalLibraryDirectories>
+       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+     </Lib>
+     <ProjectReference>
+@@ -1151,6 +1151,7 @@
+     <Image Include="..\src\otcicon.ico" />
+   </ItemGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <Import Project="C:\Repo\vcpkg-2019\scripts\buildsystems\msbuild\vcpkg.targets" />
+   <ImportGroup Label="ExtensionTargets">
+   </ImportGroup>
+ </Project>
+\ No newline at end of file
+diff --git a/vc16/settings.props b/vc16/settings.props
+index fb7fbf8..610c073 100644
+--- a/vc16/settings.props
++++ b/vc16/settings.props
+@@ -1,6 +1,7 @@
+ ﻿<?xml version="1.0" encoding="utf-8"?>
+ <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <ImportGroup Label="PropertySheets" />
++  <Import Project="C:\Repo\vcpkg-2019\scripts\buildsystems\msbuild\vcpkg.props" />
+   <PropertyGroup Label="UserMacros">
+     <PREPROCESSOR_DEFS>
+         WIN32;
+@@ -45,6 +46,9 @@
+     <LinkIncremental>false</LinkIncremental>
+   </PropertyGroup>
+   <PropertyGroup Label="Globals">
++   <VcpkgRoot>C:\Repo\vcpkg-2019\</VcpkgRoot>
++   <VcpkgEnabled>true</VcpkgEnabled>
++   <VcpkgEnableManifest>false</VcpkgEnableManifest>
+    <VcpkgConfiguration>Release</VcpkgConfiguration>
+ 	 <VcpkgTriplet Condition="'$(Platform)'=='Win32'">x86-windows-static</VcpkgTriplet>
+ 	 <VcpkgTriplet Condition="'$(Platform)'=='x64'">x64-windows-static</VcpkgTriplet>

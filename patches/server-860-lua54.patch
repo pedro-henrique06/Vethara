@@ -1,0 +1,51 @@
+warning: in the working copy of 'data/lib/core/position.lua', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/lib/debugging/dump.lua', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/npc/lib/npcsystem/modules.lua', LF will be replaced by CRLF the next time Git touches it
+diff --git a/data/lib/core/position.lua b/data/lib/core/position.lua
+index 2562240..6e97581 100644
+--- a/data/lib/core/position.lua
++++ b/data/lib/core/position.lua
+@@ -75,9 +75,10 @@ do
+ 		local toTile = Tile(defaultPosition)
+ 		if not toTile or not toTile:isWalkable() then
+ 			for direction = DIRECTION_NORTH, DIRECTION_NORTHEAST do
+-				if direction == DIRECTION_SOUTH then direction = DIRECTION_WEST end
++				-- Lua 5.4: variavel de controle do for e const; usamos uma copia
++				local dir = direction == DIRECTION_SOUTH and DIRECTION_WEST or direction
+ 
+-				local position = self + Position.directionOffset[direction]
++				local position = self + Position.directionOffset[dir]
+ 				toTile = Tile(position)
+ 				if toTile and toTile:isWalkable() then
+ 					swap(self, position)
+diff --git a/data/lib/debugging/dump.lua b/data/lib/debugging/dump.lua
+index 22178a5..bf0617e 100644
+--- a/data/lib/debugging/dump.lua
++++ b/data/lib/debugging/dump.lua
+@@ -9,11 +9,11 @@ function dumpLevel(input, level)
+ 		local lines = {}
+ 
+ 		for k, v in pairs(input) do
+-			if type(k) ~= 'number' then k = '"' .. k .. '"' end
++			local key = type(k) ~= 'number' and '"' .. k .. '"' or k
+ 
+-			if type(v) == 'string' then v = '"' .. v .. '"' end
++			local val = type(v) == 'string' and '"' .. v .. '"' or v
+ 
+-			table.insert(lines, indent .. '\t[' .. k .. '] = ' .. dumpLevel(v, level + 1))
++			table.insert(lines, indent .. '	[' .. key .. '] = ' .. dumpLevel(val, level + 1))
+ 		end
+ 		return str .. table.concat(lines, ',\n') .. '\n' .. indent .. '}'
+ 	end
+diff --git a/data/npc/lib/npcsystem/modules.lua b/data/npc/lib/npcsystem/modules.lua
+index c91031b..5272c38 100644
+--- a/data/npc/lib/npcsystem/modules.lua
++++ b/data/npc/lib/npcsystem/modules.lua
+@@ -547,7 +547,6 @@ if Modules == nil then
+             else
+                 msg = msg .. ", "
+             end
+-            i = i + 1
+         end
+ 
+         module.npcHandler:say(msg, cid)

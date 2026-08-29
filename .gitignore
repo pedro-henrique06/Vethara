@@ -1,0 +1,33 @@
+# Segredos — nunca commitar
+.env
+docker/.env
+*.pem
+*.key
+
+# Assets da CipSoft (copyright) — cada um baixa os seus
+Tibia.spr
+Tibia.dat
+Tibia.pic
+data/things/
+*.otbi
+catalog-content.json
+
+# Mapas e datapacks pesados
+*.otbm
+*-spawn.xml
+*-house.xml
+
+# Artefatos de build
+build/
+vcpkg_installed/
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.ilk
+*.exp
+
+# Logs e temporários
+*.log
+logs/

@@ -1,0 +1,57 @@
+warning: in the working copy of 'init.lua', CRLF will be replaced by LF the next time Git touches it
+diff --git a/init.lua b/init.lua
+index f859a3b..1677ae8 100644
+--- a/init.lua
++++ b/init.lua
+@@ -63,43 +63,20 @@ if ENABLE_SERVERS then
+     --
+     Servers_init = {
+ 
+-        -- Local login server
+-        ---
+-        -- Configuration for local login server.
+-        -- @class table
+-        -- @name local_login
+-        -- @field port Port used for HTTP connection
+-        -- @field protocol Protocol identifier used by the application
+-        -- @field httpLogin Enables HTTP-based login on the server
+-        -- @field useAuthenticator Enables additional authentication layer
+-        --
+-        ["http://127.0.0.1/login.php"] = {
+-            port = 80,
+-            protocol = 1511,
++        -- Servidor local do Vethara (stack Canary via docker).
++        -- O login-server responde em 8088; o mundo roda em 7172.
++        ["http://127.0.0.1:8088/login"] = {
++            port = 8088,
++            protocol = 1525,
+             httpLogin = true,
+             useAuthenticator = false
+-        },
+-
+-        -- External server
+-        ---
+-        -- Configuration for external server ip.net.
+-        -- @class table
+-        -- @name ip_net
+-        -- @field port TCP port used for connection
+-        -- @field protocol Protocol identifier used by the server
+-        -- @field httpLogin Indicates if the server allows HTTP login
+-        --
+-        ["ip.net"] = {
+-            port = 7171,
+-            protocol = 860,
+-            httpLogin = false
+         }
+     }
+ end
+ 
+-g_app.setName("OTClient - Redemption");
+-g_app.setCompactName("otclient");
+-g_app.setOrganizationName("otcr");
++g_app.setName("Vethara");
++g_app.setCompactName("vethara");
++g_app.setOrganizationName("vethara");
+ 
+ g_app.hasUpdater = function()
+     return (Services.updater and Services.updater ~= "" and g_modules.getModule("updater"))
