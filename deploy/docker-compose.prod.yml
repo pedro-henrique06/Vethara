@@ -63,6 +63,7 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    command: caddy run --config /etc/caddy-conf/Caddyfile --adapter caddyfile
     ports:
       - '80:80'
       - '443:443'
@@ -70,7 +71,11 @@ services:
     environment:
       VETHARA_DOMAIN: "${VETHARA_DOMAIN:?defina VETHARA_DOMAIN no .env}"
     volumes:
-      - '../deploy/Caddyfile:/etc/caddy/Caddyfile:ro'
+      # Monta o DIRETORIO, nao o arquivo. Bind mount de arquivo unico aponta para
+      # o inode: quando o git pull substitui o Caddyfile (escreve novo + renomeia),
+      # o container continua vendo o inode antigo, ja orfao. O reload roda sem erro
+      # e aplica a versao velha — sintoma dificil de diagnosticar.
+      - '../deploy:/etc/caddy-conf:ro'
       - '../download:/srv/download:ro'
       - 'caddy-data:/data'
       - 'caddy-config:/config'

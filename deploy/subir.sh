@@ -87,11 +87,11 @@ docker compose "${ARQUIVOS[@]}" up -d
 # rotas sobe os containers novos e mesmo assim serve a configuracao antiga.
 if [[ "$USA_CADDY" -eq 1 ]]; then
 	echo
-	if docker compose "${ARQUIVOS[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null; then
+	if docker compose "${ARQUIVOS[@]}" exec -T caddy caddy reload --config /etc/caddy-conf/Caddyfile 2>/dev/null; then
 		verde "Caddy recarregado com a configuracao atual."
 	else
 		amarelo "Nao consegui recarregar o Caddy. Se mexeu no Caddyfile, rode:"
-		echo "    docker compose ${ARQUIVOS[*]} exec caddy caddy reload --config /etc/caddy/Caddyfile"
+		echo "    docker compose ${ARQUIVOS[*]} exec caddy caddy reload --config /etc/caddy-conf/Caddyfile"
 	fi
 fi
 
