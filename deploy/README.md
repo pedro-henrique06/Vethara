@@ -143,8 +143,10 @@ cp otclient.exe init.lua /tmp/vethara-client/
 # o que e nosso, e por isso nao esta no git do otclient
 cp -r ../vethara-repo/client/modules/game_helper /tmp/vethara-client/modules/
 # os assets da CipSoft: estao no .gitignore do otclient, entao o git archive nao
-# os inclui. Sem eles o client abre e falha em catalog-content.json.
+# os inclui. Sem os graficos o client abre e falha em catalog-content.json;
+# sem os sons ele roda mudo, so com um aviso no log.
 cp -r data/things/1525 /tmp/vethara-client/data/things/
+cp -r data/sounds/1525 /tmp/vethara-client/data/sounds/
 # compacte /tmp/vethara-client como vethara-client.zip
 ```
 
