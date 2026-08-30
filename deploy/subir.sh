@@ -80,7 +80,10 @@ else
 	amarelo "Sem VETHARA_DOMAIN -- subindo sem Caddy. O site e o login ficam em HTTP."
 fi
 
-docker compose "${ARQUIVOS[@]}" up -d
+# --build e obrigatorio: sem ele, o compose reaproveita a imagem existente dos
+# servicos com build (api, web, myaac). O git pull traria codigo novo e o deploy
+# subiria o antigo, sem avisar. O cache de camadas faz isso ser rapido quando nada mudou.
+docker compose "${ARQUIVOS[@]}" up -d --build
 
 # O Caddyfile e bind mount: mudar o conteudo nao faz o Compose recriar o container,
 # e o Caddy nao rele o arquivo sozinho. Sem este reload, um git pull que mexeu nas
