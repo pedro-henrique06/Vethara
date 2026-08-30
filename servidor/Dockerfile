@@ -1,7 +1,7 @@
-# Imagem do servidor com as taxas do Vethara.
+# Imagem do servidor com os ajustes do Vethara.
 #
-# As taxas entram aqui, e nao por docker exec no container, porque o config.lua
-# fica DENTRO da imagem do Canary — o Dockerfile deles faz
+# Eles entram aqui, e nao por docker exec no container, porque o config.lua fica
+# DENTRO da imagem do Canary — o Dockerfile deles faz
 # `COPY config.lua.dist /canary/config.lua`, e o volume /data so guarda o dump do
 # banco. Editar o arquivo com o servidor rodando funciona ate o proximo deploy
 # recriar o container a partir da imagem: a alteracao some sem aviso nenhum.
@@ -15,7 +15,7 @@ FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c
 #
 # rateExp 50 e a experiencia final, nao um bonus sobre os stages: com
 # rateUseStages = false o Canary usa rateExp direto e ignora o data/stages.lua
-# (data/libs/functions/player.lua:338). O padrao do Canary e 1, entao isto e 15x.
+# (data/libs/functions/player.lua:338). O padrao do Canary e 1.
 #
 # freePremium liga o multiplicador de stamina. Ele so vale para conta premium com
 # stamina acima de 2340 minutos (data/libs/functions/player.lua:353); sem premium
@@ -25,12 +25,19 @@ FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c
 #
 # toggleLearnSpells false libera as magias por level em vez de por compra. Com
 # ele em true, o Canary exige que TODA magia instantanea tenha sido aprendida de
-# um NPC (spells.cpp:562). Em false, so as que se declaram needLearn(true)
-# continuam exigindo — 18 das 200, todas de quest ou fim de jogo (avatares,
-# great death beam, executioners throw).
+# um NPC (spells.cpp:562). Os requisitos continuam de pe: level, magic level,
+# vocacao e mana sao checados antes e em separado (spells.cpp:539).
 #
-# Os requisitos continuam de pe: level, magic level, vocacao e mana sao checados
-# antes e em separado (spells.cpp:539).
+# O sed nos scripts alcanca as 18 magias que se declaram needLearn(true) uma a
+# uma, fora do alcance da chave de config: avatares, great death beam,
+# executioners throw, os bursts. A Wheel of Destiny concede essas magias com
+# learnInstantSpell e as retira em resetUpgradedSpells (player_wheel.cpp:3437);
+# com needLearn false isso deixa de controlar se da para castar, mas a wheel
+# segue controlando o GRAU. Quem nao investiu nela casta no grau minimo.
+#
+# O caminho e data/scripts/spells de proposito: as 590 ocorrencias em
+# data-otservbr-global/scripts/spells/monster sao magias de monstro e nao tem
+# nada a ver com o que o jogador pode castar.
 #
 # basespeed 220 dobra a velocidade base das vocacoes. A velocidade final e
 # basespeed + (level - 1), entao o ganho e de +110 em qualquer nivel: no level 1
@@ -43,9 +50,12 @@ RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 3/' \
            /canary/config.lua \
  && sed -i 's/basespeed="110"/basespeed="220"/g' \
            /canary/data/XML/vocations.xml \
+ && find /canary/data/scripts/spells -name '*.lua' \
+      -exec sed -i 's/needLearn(true)/needLearn(false)/g' {} + \
  && grep -qx 'rateSpawn = 3' /canary/config.lua \
  && grep -qx 'rateExp = 50' /canary/config.lua \
  && grep -qx 'freePremium = true' /canary/config.lua \
  && grep -qx 'toggleLearnSpells = false' /canary/config.lua \
  && ! grep -q 'basespeed="110"' /canary/data/XML/vocations.xml \
- && echo "taxas do Vethara aplicadas"
+ && ! grep -rq 'needLearn(true)' /canary/data/scripts/spells \
+ && echo "ajustes do Vethara aplicados"
