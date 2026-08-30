@@ -12,11 +12,12 @@
 # por cima do ufw, entao portas publicadas ficam abertas mesmo com o ufw configurado.
 
 services:
+  # Imagem propria: o Canary oficial mais as taxas do Vethara (respawn, exp e
+  # velocidade base). Ver servidor/Dockerfile, onde tambem fica fixado o digest
+  # do Canary — trocar o sha256 de la e como se atualiza o servidor.
   server:
-    # Fixado no digest que validamos. Para atualizar de propósito:
-    #   docker compose pull server && docker compose up -d server
-    # e então troque o digest aqui.
-    image: ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c2c6ec53618b3fed6f552762
+    build: ../servidor
+    image: vethara-canary:local
 
   # O banco nao e publicado pelo compose base. Aqui ele passa a escutar apenas em
   # 127.0.0.1 do VPS, o suficiente para um tunel SSH (DBeaver e afins). De fora

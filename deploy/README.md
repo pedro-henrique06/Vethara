@@ -147,6 +147,34 @@ A partir dai a publicacao e automatica: crie um **release no GitHub** com o zip
 anexado como `vethara-client.zip` e o workflow leva ao VPS sozinho, calcula o
 SHA-256 e atualiza a pagina de download. Passo a passo em [CICD.md](CICD.md).
 
+## Taxas do servidor
+
+Respawn, experiencia e velocidade ficam em `servidor/Dockerfile`, que parte da
+imagem oficial do Canary e aplica as alteracoes.
+
+| Ajuste | Onde | Valor |
+| --- | --- | --- |
+| Respawn | `rateSpawn` no config.lua | `3` — os 90s do mapa global viram 30s |
+| Experiencia | `rateExp` no config.lua | `4` — 4x, com `rateUseStages = false` |
+| Velocidade | `basespeed` em data/XML/vocations.xml | `220` — o dobro da base |
+
+**Nao edite o config.lua com `docker exec`.** Ele fica dentro da imagem (o
+Dockerfile do Canary faz `COPY config.lua.dist /canary/config.lua`), e o volume
+`/data` so guarda o dump do banco. A edicao funciona ate o proximo deploy recriar
+o container a partir da imagem — e ai some sem aviso.
+
+O build confere com `grep` que cada `sed` casou. Um `sed` que nao encontra o
+padrao sai com sucesso e a imagem subiria com os valores padrao; assim o build
+falha em vez de o servidor rodar errado.
+
+Sobre a velocidade: a final e `basespeed + (level - 1)`, entao dobrar a base da
++110 em qualquer nivel — o dobro exato no level 1, cerca de 1,5x no level 100.
+Dobrar em todos os niveis exigiria script Lua recalculando a cada level up.
+
+**Cada deploy que muda o servidor recria o container, e o mapa e baixado de
+novo** (~200 MB): ele vive na camada gravavel do container, nao no volume. A
+primeira subida depois de mexer nas taxas leva alguns minutos.
+
 ## Site: React + API .NET
 
 O site publico e um projeto React (`web/`) consumindo uma API em ASP.NET Core
