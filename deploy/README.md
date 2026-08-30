@@ -203,6 +203,11 @@ VETHARA_JWT_SECRET=%s
 bash deploy/subir.sh
 ```
 
+## Deploy automatico
+
+Todo push na main publica sozinho, via GitHub Actions. O passo a passo de
+configuracao esta em [CICD.md](CICD.md).
+
 ## Acessar o banco de uma ferramenta grafica
 
 O banco escuta apenas em `127.0.0.1` dentro do VPS — de fora continua inalcancavel.

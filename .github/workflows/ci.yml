@@ -1,0 +1,60 @@
+name: CI
+
+# Roda em pull request e em branch que não seja a main. A main tem workflow
+# próprio, que compila e só então publica — assim nada vai para produção sem
+# ter compilado antes.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+jobs:
+  api:
+    name: API .NET
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restaurar
+        run: dotnet restore
+        working-directory: api
+      - name: Compilar
+        # Aviso vira erro: o que passa aqui é o que roda em produção.
+        run: dotnet build -c Release --no-restore -warnaserror
+        working-directory: api
+
+  web:
+    name: Front React
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Instalar
+        run: npm ci
+        working-directory: web
+      - name: Compilar
+        # O build roda o tsc antes do Vite, então erro de tipo reprova aqui.
+        run: npm run build
+        working-directory: web
+
+  infra:
+    name: Compose e Caddyfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar o compose de produção
+        env:
+          VETHARA_DOMAIN: exemplo.com
+        run: docker compose -f docker/docker-compose.yml -f deploy/docker-compose.prod.yml config --quiet
+      - name: Validar o Caddyfile
+        run: |
+          docker run --rm -v "$PWD/deploy:/cfg:ro" -e VETHARA_DOMAIN=exemplo.com \
+            caddy:2-alpine caddy validate --config /cfg/Caddyfile --adapter caddyfile
+      - name: Conferir a sintaxe dos scripts
+        run: bash -n deploy/*.sh

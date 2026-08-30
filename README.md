@@ -108,6 +108,14 @@ até a API assumir essas partes.
 
 ---
 
+## Deploy
+
+Push na `main` publica em producao automaticamente. Configuracao em
+[deploy/CICD.md](deploy/CICD.md); o passo a passo manual continua em
+[deploy/README.md](deploy/README.md).
+
+---
+
 ## Ferramentas (`dev/`)
 
 Testam o servidor no nível de protocolo, sem abrir client gráfico. Úteis para separar

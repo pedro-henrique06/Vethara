@@ -1,0 +1,83 @@
+name: Deploy
+
+# Publica em produção a cada push na main. Compila antes: se a API ou o front
+# não compilarem, o deploy não acontece.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Dois deploys ao mesmo tempo deixariam o VPS num estado imprevisível.
+# O segundo espera o primeiro terminar em vez de ser cancelado — cancelar no
+# meio de um docker compose up é pior que enfileirar.
+concurrency:
+  group: producao
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    name: Compilar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet build -c Release -warnaserror
+        working-directory: api
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+
+  publicar:
+    name: Publicar no VPS
+    needs: verificar
+    runs-on: ubuntu-latest
+    environment: producao
+    steps:
+      - name: Preparar o acesso SSH
+        env:
+          CHAVE: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$CHAVE" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          # Chave publica do host fixada no repositorio, em vez de ssh-keyscan.
+          # Aceitar o que o servidor apresentar na hora tornaria o deploy
+          # vulneravel a quem conseguisse se passar por ele.
+          # Confere com: ssh-keygen -lf <(ssh-keyscan vethara.com.br)
+          # SHA256:WdmPWG2mw70lcsAKoBY1aIAFnYJFdreGnobi35eZ85E
+          echo "vethara.com.br ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA5beRBAMi0Uv3dBTIkvBfumriRTz6tRHtUzZnc3zyal" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Disparar o deploy
+        env:
+          USUARIO: ${{ secrets.VPS_USER }}
+          HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          # O comando enviado e ignorado: a chave no VPS esta presa a um
+          # command= fixo no authorized_keys, que roda git pull + subir.sh e
+          # nada mais. Mesmo vazando, essa chave nao da shell.
+          ssh -i ~/.ssh/deploy -o BatchMode=yes "$USUARIO@$HOST" deploy
+
+      - name: Conferir que o site respondeu
+        run: |
+          for tentativa in $(seq 1 12); do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 https://vethara.com.br/api/saude || true)
+            if [ "$codigo" = "200" ]; then
+              echo "API respondendo (HTTP 200)."
+              exit 0
+            fi
+            echo "tentativa $tentativa: HTTP $codigo — aguardando o stack subir"
+            sleep 10
+          done
+          echo "A API nao respondeu 200 depois do deploy." >&2
+          exit 1
