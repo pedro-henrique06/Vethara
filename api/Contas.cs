@@ -21,6 +21,19 @@ public static partial class Contas
     [GeneratedRegex(@"^[A-Za-zÀ-ÿ]+(?: [A-Za-zÀ-ÿ]+)*$")]
     private static partial Regex FormatoNome();
 
+    /// <summary>Regras do nome de personagem, reaproveitadas na criacao avulsa.</summary>
+    public static string? ValidarNomePersonagem(string? nome, int sexo)
+    {
+        var n = nome?.Trim() ?? "";
+        if (n.Length is < 3 or > 20)
+            return "O nome do personagem precisa ter entre 3 e 20 caracteres.";
+        if (!FormatoNome().IsMatch(n))
+            return "O nome do personagem aceita apenas letras e espaços simples.";
+        if (sexo is not (0 or 1))
+            return "Sexo inválido.";
+        return null;
+    }
+
     public static string? Validar(NovaConta c)
     {
         var email = c.Email?.Trim() ?? "";

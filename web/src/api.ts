@@ -1,3 +1,5 @@
+import { sessao } from './sessao'
+
 // Front e API ficam na mesma origem — o Caddy roteia /api para o container .NET.
 // Por isso os caminhos são relativos: não há URL de servidor embutida no build.
 
@@ -55,7 +57,43 @@ async function enviar<T>(caminho: string, corpo: unknown): Promise<T> {
   return dados as T
 }
 
+export type Personagem = {
+  nome: string
+  level: number
+  vocacao: number
+  ultimoLogin: string | null
+}
+
+export type MinhaConta = {
+  email: string
+  personagens: Personagem[]
+}
+
+// O token vai no cabeçalho Authorization. Se a API recusar, a sessão morreu:
+// quem chamou decide se manda para o login.
+async function autenticado<T>(caminho: string, metodo = 'GET', corpo?: unknown): Promise<T> {
+  const token = sessao.token()
+  const r = await fetch(`/api${caminho}`, {
+    method: metodo,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: corpo ? JSON.stringify(corpo) : undefined
+  })
+  const dados = await r.json().catch(() => null)
+  if (!r.ok) throw new Error(dados?.erro ?? 'Sua sessão expirou. Entre novamente.')
+  return dados as T
+}
+
 export const api = {
+  entrar: (email: string, senha: string) =>
+    enviar<{ token: string; email: string }>('/sessao', { email, senha }),
+  minhaConta: () => autenticado<MinhaConta>('/minha-conta'),
+  criarPersonagem: (nome: string, sexo: number) =>
+    autenticado<{ nome: string }>('/minha-conta/personagens', 'POST', { nome, sexo }),
+  trocarSenha: (senhaAtual: string, senhaNova: string) =>
+    autenticado<{ mensagem: string }>('/minha-conta/senha', 'POST', { senhaAtual, senhaNova }),
   criarConta: (c: NovaConta) => enviar<{ mensagem: string }>('/contas', c),
   status: () => buscar<Status>('/status'),
   online: () => buscar<Jogador[]>('/online'),

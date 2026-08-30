@@ -55,6 +55,16 @@ if [[ "$EH_IP" -eq 0 ]] && ! grep -q '^VETHARA_DOMAIN=' "$DESTINO"; then
 	printf '\n# Dominio usado pelo Caddy para emitir o certificado HTTPS\nVETHARA_DOMAIN=%s\n' "$DOMINIO" >>"$DESTINO"
 fi
 
+# Segredo que assina os tokens de sessao do site. Sem ele a API gera um aleatorio
+# a cada reinicio, e todo mundo logado no painel cai junto.
+if ! grep -q '^VETHARA_JWT_SECRET=' "$DESTINO"; then
+	printf '
+# Assina os tokens de sessao do site
+VETHARA_JWT_SECRET=%s
+' "$(openssl rand -base64 48 | tr -d '
+')" >>"$DESTINO"
+fi
+
 chmod 600 "$DESTINO"
 
 if [[ "$EH_IP" -eq 1 ]]; then

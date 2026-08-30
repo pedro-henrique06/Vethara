@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using System.Data;
 using MySqlConnector;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Vethara;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +29,31 @@ var connString = new MySqlConnectionStringBuilder
 }.ConnectionString;
 
 builder.Services.AddSingleton(_ => new DbFactory(connString));
+
+// Sem isto o ASP.NET Core renomeia as claims do token (sub vira NameIdentifier,
+// email vira o URI do schema), e o codigo que le pelo nome original nao acha nada.
+System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+var chaveJwt = Sessao.Chave(LoggerFactory.Create(b => b.AddConsole()).CreateLogger("sessao"));
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = Sessao.Emissor,
+            ValidAudience = Sessao.Emissor,
+            IssuerSigningKey = chaveJwt,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Vocações do Canary. Ids desconhecidos caem no fallback em vez de virar "None",
 // que esconderia uma vocação nova numa atualização do servidor.
@@ -201,6 +228,87 @@ app.MapPost("/api/contas", async (DbFactory db, NovaConta corpo) =>
         mensagem = "Conta criada. Use o e-mail e a senha para entrar no jogo."
     });
 });
+
+app.MapPost("/api/sessao", async (DbFactory db, Credenciais corpo) =>
+{
+    var email = corpo.Email?.Trim().ToLowerInvariant() ?? "";
+    var senha = corpo.Senha ?? "";
+    if (email.Length == 0 || senha.Length == 0)
+        return Results.BadRequest(new { erro = "Informe e-mail e senha." });
+
+    await using var c = await db.OpenAsync();
+    var conta = await Sessao.AutenticarAsync(c, email, senha);
+
+    // Mesma resposta para e-mail inexistente e senha errada: dizer qual dos dois
+    // falhou entrega a quem sonda quais e-mails estao cadastrados.
+    if (conta is null)
+        return Results.Json(new { erro = "E-mail ou senha incorretos." }, statusCode: 401);
+
+    return Results.Ok(new
+    {
+        token = Sessao.Emitir(chaveJwt, conta.Value.Id, conta.Value.Email),
+        email = conta.Value.Email
+    });
+});
+
+app.MapGet("/api/minha-conta", async (DbFactory db, ClaimsPrincipal usuario) =>
+{
+    var contaId = Sessao.ContaDoUsuario(usuario);
+    if (contaId is null) return Results.Unauthorized();
+
+    await using var c = await db.OpenAsync();
+    return Results.Ok(new
+    {
+        email = await Sessao.EmailDaContaAsync(c, contaId.Value),
+        personagens = await Sessao.PersonagensAsync(c, contaId.Value)
+    });
+}).RequireAuthorization();
+
+app.MapPost("/api/minha-conta/personagens", async (DbFactory db, ClaimsPrincipal usuario, NovoPersonagem corpo) =>
+{
+    var contaId = Sessao.ContaDoUsuario(usuario);
+    if (contaId is null) return Results.Unauthorized();
+
+    var erro = Contas.ValidarNomePersonagem(corpo.Nome, corpo.Sexo);
+    if (erro is not null) return Results.BadRequest(new { erro });
+
+    var nome = corpo.Nome!.Trim();
+    await using var c = await db.OpenAsync();
+
+    // Um teto evita que uma conta encha o banco de nomes reservados.
+    if (await Sessao.QuantosPersonagensAsync(c, contaId.Value) >= 10)
+        return Results.BadRequest(new { erro = "Sua conta ja tem o maximo de 10 personagens." });
+
+    if (await Contas.PersonagemEmUsoAsync(c, nome))
+        return Results.Conflict(new { erro = "Esse nome de personagem ja esta em uso." });
+
+    try
+    {
+        await Sessao.CriarPersonagemAsync(c, contaId.Value, nome, corpo.Sexo);
+    }
+    catch (MySqlException e) when (e.Number == 1062)
+    {
+        return Results.Conflict(new { erro = "Esse nome acabou de ser registrado por outra pessoa." });
+    }
+
+    return Results.Created("/api/minha-conta", new { nome });
+}).RequireAuthorization();
+
+app.MapPost("/api/minha-conta/senha", async (DbFactory db, ClaimsPrincipal usuario, TrocaSenha corpo) =>
+{
+    var contaId = Sessao.ContaDoUsuario(usuario);
+    if (contaId is null) return Results.Unauthorized();
+
+    if ((corpo.SenhaNova?.Length ?? 0) < 8)
+        return Results.BadRequest(new { erro = "A nova senha precisa ter ao menos 8 caracteres." });
+
+    await using var c = await db.OpenAsync();
+    var ok = await Sessao.TrocarSenhaAsync(c, contaId.Value, corpo.SenhaAtual ?? "", corpo.SenhaNova!);
+
+    return ok
+        ? Results.Ok(new { mensagem = "Senha alterada. Use a nova para entrar no jogo." })
+        : Results.BadRequest(new { erro = "A senha atual esta incorreta." });
+}).RequireAuthorization();
 
 // Usado pelo healthcheck do compose: responde 200 só se o banco estiver acessível.
 app.MapGet("/api/saude", async (DbFactory db) =>

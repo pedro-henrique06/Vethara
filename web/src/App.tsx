@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, Link } from 'react-router-dom'
 import { api, type Status } from './api'
+import { sessao } from './sessao'
 import Home from './pages/Home'
 import Highscores from './pages/Highscores'
 import Online from './pages/Online'
 import Download from './pages/Download'
 import CriarConta from './pages/CriarConta'
+import Entrar from './pages/Entrar'
+import MinhaConta from './pages/MinhaConta'
 
 function Topo() {
   const [status, setStatus] = useState<Status | null>(null)
@@ -31,7 +34,9 @@ function Topo() {
           <NavLink to="/online" className={classe}>Online</NavLink>
           <NavLink to="/download" className={classe}>Download</NavLink>
           <NavLink to="/criar-conta" className={classe}>Criar conta</NavLink>
-          <a href="/aac">Minha conta</a>
+          {sessao.ativa()
+            ? <NavLink to="/minha-conta" className={classe}>Minha conta</NavLink>
+            : <NavLink to="/entrar" className={classe}>Entrar</NavLink>}
         </nav>
         {status && (
           <div className="pulso">
@@ -55,6 +60,8 @@ export default function App() {
           <Route path="/online" element={<Online />} />
           <Route path="/download" element={<Download />} />
           <Route path="/criar-conta" element={<CriarConta />} />
+          <Route path="/entrar" element={<Entrar />} />
+          <Route path="/minha-conta" element={<MinhaConta />} />
           <Route path="*" element={
             <div className="aviso">
               Página não encontrada. <Link to="/">Voltar ao início</Link>.

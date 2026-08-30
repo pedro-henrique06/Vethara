@@ -238,3 +238,12 @@ tbody tr:hover { background: var(--surface); }
 
 .formulario button { border: 0; cursor: pointer; font: inherit; align-self: flex-start; }
 .formulario button:disabled { opacity: 0.6; cursor: default; }
+
+.cabecalho-conta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.cabecalho-conta button { cursor: pointer; font: inherit; }

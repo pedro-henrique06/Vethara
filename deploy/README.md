@@ -185,6 +185,24 @@ bash deploy/subir.sh
 Os dois projetos compilam dentro do Docker: o VPS nao precisa de SDK do .NET nem de
 Node instalados.
 
+### Painel de conta
+
+O site tem login proprio: criacao de conta, lista de personagens, criacao de
+personagem e troca de senha, tudo pela API .NET. O MyAAC em `/aac` ficou apenas
+como painel administrativo.
+
+A sessao usa um token assinado com `VETHARA_JWT_SECRET`, gerado pelo
+`gerar-env.sh`. **Se um `.env` antigo nao tiver essa variavel**, a API sobe com um
+segredo aleatorio e derruba as sessoes a cada reinicio. Para acrescentar:
+
+```bash
+printf '
+VETHARA_JWT_SECRET=%s
+' "$(openssl rand -base64 48 | tr -d '
+')" >> docker/.env
+bash deploy/subir.sh
+```
+
 ## Acessar o banco de uma ferramenta grafica
 
 O banco escuta apenas em `127.0.0.1` dentro do VPS — de fora continua inalcancavel.
