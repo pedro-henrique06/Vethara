@@ -155,7 +155,7 @@ imagem oficial do Canary e aplica as alteracoes.
 | Ajuste | Onde | Valor |
 | --- | --- | --- |
 | Respawn | `rateSpawn` no config.lua | `3` — os 90s do mapa global viram 30s |
-| Experiencia | `rateExp` no config.lua | `25` — 25x, com `rateUseStages = false` |
+| Experiencia | `rateExp` no config.lua | `50` — 50x, com `rateUseStages = false` |
 | Velocidade | `basespeed` em data/XML/vocations.xml | `220` — o dobro da base |
 | Premium | `freePremium` no config.lua | `true` — libera o multiplicador de stamina x1.5 |
 
