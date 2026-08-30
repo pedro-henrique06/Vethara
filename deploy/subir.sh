@@ -80,6 +80,20 @@ fi
 
 docker compose "${ARQUIVOS[@]}" up -d
 
+# O Caddyfile e bind mount: mudar o conteudo nao faz o Compose recriar o container,
+# e o Caddy nao rele o arquivo sozinho. Sem este reload, um git pull que mexeu nas
+# rotas sobe os containers novos e mesmo assim serve a configuracao antiga.
+if printf '%s
+' "${ARQUIVOS[@]}" | grep -q prod; then
+	echo
+	if docker compose "${ARQUIVOS[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null; then
+		verde "Caddy recarregado com a configuracao atual."
+	else
+		amarelo "Nao consegui recarregar o Caddy. Se mexeu no Caddyfile, rode:"
+		echo "    docker compose ${ARQUIVOS[*]} exec caddy caddy reload --config /etc/caddy/Caddyfile"
+	fi
+fi
+
 echo
 verde "No ar. Acompanhe o servidor ate ver 'Vethara server online!':"
 echo
