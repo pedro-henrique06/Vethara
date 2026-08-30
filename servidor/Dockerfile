@@ -17,16 +17,24 @@ FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c
 # rateUseStages = false o Canary usa rateExp direto e ignora o data/stages.lua
 # (data/libs/functions/player.lua:338). O padrao do Canary e 1, entao isto e 15x.
 #
+# freePremium liga o multiplicador de stamina. Ele so vale para conta premium com
+# stamina acima de 2340 minutos (data/libs/functions/player.lua:353); sem premium
+# o client mostra "Stamina multiplier: x1.0" e um terco da experiencia se perde.
+# A conta final e exp * (1 + bonus) * stamina * rateExp, entao o x1.5 multiplica
+# tudo: 15 * 1,5 (nivel baixo) * 1,5 (stamina) = 33,75x.
+#
 # basespeed 220 dobra a velocidade base das vocacoes. A velocidade final e
 # basespeed + (level - 1), entao o ganho e de +110 em qualquer nivel: no level 1
 # e o dobro exato, no level 100 fica ~1,5x. Dobrar em todos os niveis exigiria
 # script Lua recalculando a cada level up.
 RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 3/' \
            -e 's/^rateExp = .*/rateExp = 15/' \
+           -e 's/^freePremium = .*/freePremium = true/' \
            /canary/config.lua \
  && sed -i 's/basespeed="110"/basespeed="220"/g' \
            /canary/data/XML/vocations.xml \
  && grep -qx 'rateSpawn = 3' /canary/config.lua \
  && grep -qx 'rateExp = 15' /canary/config.lua \
+ && grep -qx 'freePremium = true' /canary/config.lua \
  && ! grep -q 'basespeed="110"' /canary/data/XML/vocations.xml \
  && echo "taxas do Vethara aplicadas"
