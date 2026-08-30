@@ -69,7 +69,6 @@ MainWindow
     vertical-scrollbar: barra
     layout:
       type: verticalBox
-      fit-children: true
 
   VerticalScrollBar
     id: barra

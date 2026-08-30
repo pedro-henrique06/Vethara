@@ -43,3 +43,19 @@ cp -r client/modules/game_helper ../Vethara/client-modern/modules/
 O modulo tem `autoload: true`, entao carrega sozinho. Se algo quebrar, o erro
 aparece em `client-modern/vethara.log` — e so aparece se houver erro: o logger so
 descarrega o buffer nesse caso, entao arquivo vazio significa carga limpa.
+
+### O travamento do fit-children
+
+O painel rolavel do Assistente tinha  junto com ancoras em
+cima e embaixo. As duas regras se contradizem: a ancora fixa a altura, o
+fit-children manda ajustar ao conteudo. O layout nunca converge e o client trava
+em laco — sem erro, sem log, sem janela.
+
+O sintoma engana: o processo fica vivo, carrega os assets inteiros e ate cria a
+janela. Ela so nunca fica visivel. Para diagnosticar isso, enumerar as janelas do
+processo e olhar IsWindowVisible vale mais que qualquer log — e o log fica vazio
+justamente porque o buffer nunca chega a ser descarregado.
+
+**Log vazio nao significa carga limpa.** O client sempre escreve o cabecalho
+. Se nem ele aparece, o processo travou antes do
+primeiro flush, e o arquivo vazio nao e prova de nada.
