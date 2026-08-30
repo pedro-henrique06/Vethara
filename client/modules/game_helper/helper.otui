@@ -1,0 +1,104 @@
+HelperSection < Label
+  font: verdana-11px-rounded
+  color: #f0ad4d
+  text-align: left
+  height: 16
+  margin-top: 10
+
+HelperRow < Panel
+  height: 24
+  margin-top: 2
+
+  CheckBox
+    id: ativo
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: 18
+
+  Label
+    id: rotulo
+    anchors.left: ativo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 60
+    text-align: left
+
+  TextEdit
+    id: valor
+    anchors.left: rotulo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 4
+    width: 150
+
+  ComboBox
+    id: opcao
+    anchors.left: rotulo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 4
+    width: 150
+    visible: false
+
+  SpinBox
+    id: porcento
+    anchors.left: valor.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 70
+
+  Label
+    id: sufixo
+    anchors.left: porcento.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 4
+    text-align: left
+    width: 90
+
+MainWindow
+  id: helperWindow
+  !text: tr('Assistente')
+  size: 470 500
+  @onEscape: modules.game_helper.toggle()
+
+  ScrollablePanel
+    id: conteudo
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: separador.top
+    margin-bottom: 8
+    vertical-scrollbar: barra
+    layout:
+      type: verticalBox
+      fit-children: true
+
+  VerticalScrollBar
+    id: barra
+    anchors.top: conteudo.top
+    anchors.bottom: conteudo.bottom
+    anchors.right: parent.right
+    step: 24
+    pixels-scroll: true
+
+  HorizontalSeparator
+    id: separador
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: fechar.top
+    margin-bottom: 8
+
+  Label
+    id: aviso
+    anchors.left: parent.left
+    anchors.bottom: parent.bottom
+    width: 300
+    text-align: left
+    color: #808080
+    !text: tr('O assistente age uma vez por segundo, no maximo.')
+
+  Button
+    id: fechar
+    !text: tr('Fechar')
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    width: 64
+    @onClick: modules.game_helper.toggle()

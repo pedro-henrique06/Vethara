@@ -1,0 +1,10 @@
+Module
+  name: game_helper
+  description: Assistente do Vethara - cura, treino de mana e utilidades
+  author: Vethara
+  sandboxed: true
+  scripts: [ helper ]
+  autoload: true
+  dependencies: [ game_interface, client_topmenu ]
+  @onLoad: init()
+  @onUnload: terminate()

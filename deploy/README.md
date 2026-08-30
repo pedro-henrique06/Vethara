@@ -140,6 +140,8 @@ mais o `otclient.exe`, sem os assets da CipSoft, que o client baixa sozinho:
 cd client-modern
 git archive HEAD | tar -x -C /tmp/vethara-client
 cp otclient.exe init.lua /tmp/vethara-client/
+# o que e nosso, e por isso nao esta no git do otclient
+cp -r ../vethara-repo/client/modules/game_helper /tmp/vethara-client/modules/
 # compacte /tmp/vethara-client como vethara-client.zip
 ```
 
