@@ -19,7 +19,7 @@ Nao e um bot de scripts — nao anda, nao ataca, nao coleta. So automatiza o que
 jogador faria apertando teclas, e por isso e uma ferramenta do servidor e nao
 algo que ele precise coibir.
 
-### Duas decisoes que valem registro
+### Decisoes que valem registro
 
 **Intervalo minimo de 1 segundo entre magias.** Magia e enviada como fala, e o
 servidor corta em `maxMessageBuffer = 4`. Sem o limite, o assistente mutaria o
@@ -40,22 +40,30 @@ Copie a pasta para o client compilado e reinicie:
 cp -r client/modules/game_helper ../Vethara/client-modern/modules/
 ```
 
-O modulo tem `autoload: true`, entao carrega sozinho. Se algo quebrar, o erro
-aparece em `client-modern/vethara.log` — e so aparece se houver erro: o logger so
-descarrega o buffer nesse caso, entao arquivo vazio significa carga limpa.
+O modulo tem `autoload: true`, entao carrega sozinho.
 
-### O travamento do fit-children
+## O travamento do fit-children
 
-O painel rolavel do Assistente tinha  junto com ancoras em
+Vale registrar porque custou horas e porque o sintoma engana.
+
+O painel rolavel do Assistente tinha `fit-children: true` junto com ancoras em
 cima e embaixo. As duas regras se contradizem: a ancora fixa a altura, o
-fit-children manda ajustar ao conteudo. O layout nunca converge e o client trava
-em laco — sem erro, sem log, sem janela.
+`fit-children` manda ajustar ao conteudo. O layout nunca converge, e o client
+trava em laco — sem erro, sem log e sem janela.
 
-O sintoma engana: o processo fica vivo, carrega os assets inteiros e ate cria a
-janela. Ela so nunca fica visivel. Para diagnosticar isso, enumerar as janelas do
-processo e olhar IsWindowVisible vale mais que qualquer log — e o log fica vazio
-justamente porque o buffer nunca chega a ser descarregado.
+O que se ve de fora: o processo fica vivo, carrega os 6.039 assets, chega a
+350 MB e ate cria a janela com o titulo certo. Ela so nunca fica visivel.
 
-**Log vazio nao significa carga limpa.** O client sempre escreve o cabecalho
-. Se nem ele aparece, o processo travou antes do
-primeiro flush, e o arquivo vazio nao e prova de nada.
+### Como diagnosticar
+
+**Processo vivo nao prova que abriu.** O que prova e enumerar as janelas do
+processo e olhar `IsWindowVisible`, filtrando por PID com `EnumWindows`.
+
+**Log vazio nao prova carga limpa.** O client sempre escreve o cabecalho
+`Operating system: Windows` no inicio. Se nem ele aparece no arquivo, o processo
+travou antes do primeiro descarregamento do buffer, e o arquivo vazio nao e
+evidencia de nada. Erro forca o flush — foi por isso que a execucao com o bug do
+`tr('%')` mostrou tudo, e as seguintes ficaram mudas.
+
+**Bissecao resolve.** Sem o modulo a janela abre; com o modulo e `fit-children`
+nao abre; com o modulo e sem `fit-children` abre.
