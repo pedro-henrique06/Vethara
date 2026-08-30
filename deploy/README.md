@@ -155,7 +155,7 @@ imagem oficial do Canary e aplica as alteracoes.
 | Ajuste | Onde | Valor |
 | --- | --- | --- |
 | Respawn | `rateSpawn` no config.lua | `3` — os 90s do mapa global viram 30s |
-| Experiencia | `rateExp` no config.lua | `4` — 4x, com `rateUseStages = false` |
+| Experiencia | `rateExp` no config.lua | `15` — 15x, com `rateUseStages = false` |
 | Velocidade | `basespeed` em data/XML/vocations.xml | `220` — o dobro da base |
 
 **Nao edite o config.lua com `docker exec`.** Ele fica dentro da imagem (o
