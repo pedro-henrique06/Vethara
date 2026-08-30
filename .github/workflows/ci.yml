@@ -56,5 +56,9 @@ jobs:
         run: |
           docker run --rm -v "$PWD/deploy:/cfg:ro" -e VETHARA_DOMAIN=exemplo.com \
             caddy:2-alpine caddy validate --config /cfg/Caddyfile --adapter caddyfile
-      - name: Conferir a sintaxe dos scripts
-        run: bash -n deploy/*.sh
+      # shellcheck no lugar de `bash -n`: a sintaxe passar nao diz muita coisa.
+      # Estes scripts rodam com `set -euo pipefail` num VPS de producao, e o que
+      # quebra ali e variavel sem aspas, `$*` onde devia ser `$@`, comparacao que
+      # sempre da verdadeiro — tudo sintaxe valida, tudo achado aqui.
+      - name: Analisar os scripts
+        run: shellcheck deploy/*.sh

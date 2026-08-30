@@ -85,6 +85,19 @@ o deploy para em vez de criar um merge silencioso que ninguém revisou.
 **Verificação depois de publicar.** O deploy só é considerado bem-sucedido se o
 site voltar a responder. Sem isso, um deploy que derruba tudo apareceria verde.
 
+**Rollback automático.** O próprio VPS confere `/api/saude` logo depois de subir,
+por até dois minutos. Se não responder, ele volta para o commit anterior, sobe de
+novo e falha o job. O site fica no ar com a versão antiga em vez de fora com a
+nova — e você fica sabendo pelo job vermelho, não por um jogador.
+
+O `git reset --hard` do rollback anda com a `main` local para trás de propósito.
+Como o commit é ancestral do `origin/main`, o `git merge --ff-only` do próximo
+deploy avança sozinho: não há divergência para resolver na mão.
+
+**shellcheck nos scripts de deploy.** A sintaxe passar diz pouco. O que quebra um
+script com `set -euo pipefail` em produção é variável sem aspas, `$*` onde devia
+ser `$@`, comparação que sempre dá verdadeiro — tudo sintaxe válida.
+
 ## Se o deploy falhar
 
 O log do job mostra em qual etapa parou.
@@ -94,14 +107,19 @@ O log do job mostra em qual etapa parou.
 **Falhou no SSH:** confira os três segredos. `Permission denied (publickey)`
 costuma ser a chave privada colada pela metade — ela tem várias linhas.
 
-**Falhou na verificação final:** o deploy rodou, mas o site não respondeu. Entre
-no VPS e veja o que subiu:
+**Falhou depois de subir:** o site não respondeu, e o VPS já voltou sozinho para o
+commit anterior — o log do job traz as últimas linhas de `api`, `web` e `caddy`,
+que costumam dizer o motivo. Produção está no ar com a versão antiga; a nova é que
+precisa de conserto. Para ver o estado atual:
 
 ```bash
 cd ~/Vethara
+git log --oneline -1        # em que commit o VPS ficou
 docker compose ps
 docker compose logs --tail 50 api
 ```
+
+Depois de corrigir, um push novo na `main` publica por cima normalmente.
 
 ## Publicar o client
 
