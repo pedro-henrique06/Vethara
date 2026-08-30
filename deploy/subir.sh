@@ -71,8 +71,10 @@ fi
 
 # Com dominio entra o Caddy e o HTTPS; so com IP, nao ha certificado a emitir.
 ARQUIVOS=(-f "$RAIZ/docker/docker-compose.yml")
+USA_CADDY=0
 if [[ -n "$(valor VETHARA_DOMAIN)" ]]; then
 	ARQUIVOS+=(-f "$RAIZ/deploy/docker-compose.prod.yml")
+	USA_CADDY=1
 	verde "Dominio $(valor VETHARA_DOMAIN) -- subindo com Caddy e HTTPS."
 else
 	amarelo "Sem VETHARA_DOMAIN -- subindo sem Caddy. O site e o login ficam em HTTP."
@@ -83,8 +85,7 @@ docker compose "${ARQUIVOS[@]}" up -d
 # O Caddyfile e bind mount: mudar o conteudo nao faz o Compose recriar o container,
 # e o Caddy nao rele o arquivo sozinho. Sem este reload, um git pull que mexeu nas
 # rotas sobe os containers novos e mesmo assim serve a configuracao antiga.
-if printf '%s
-' "${ARQUIVOS[@]}" | grep -q prod; then
+if [[ "$USA_CADDY" -eq 1 ]]; then
 	echo
 	if docker compose "${ARQUIVOS[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null; then
 		verde "Caddy recarregado com a configuracao atual."
