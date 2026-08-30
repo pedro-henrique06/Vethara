@@ -158,6 +158,7 @@ imagem oficial do Canary e aplica as alteracoes.
 | Experiencia | `rateExp` no config.lua | `50` — 50x, com `rateUseStages = false` |
 | Velocidade | `basespeed` em data/XML/vocations.xml | `220` — o dobro da base |
 | Premium | `freePremium` no config.lua | `true` — libera o multiplicador de stamina x1.5 |
+| Magias | `toggleLearnSpells` no config.lua | `false` — liberadas por level, sem comprar de NPC |
 
 **Nao edite o config.lua com `docker exec`.** Ele fica dentro da imagem (o
 Dockerfile do Canary faz `COPY config.lua.dist /canary/config.lua`), e o volume

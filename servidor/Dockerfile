@@ -23,6 +23,15 @@ FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c
 # A conta final e exp * (1 + bonus) * stamina * rateExp, entao o x1.5 multiplica
 # tudo: 50 * 1,5 (nivel baixo) * 1,5 (stamina) = 112,5x.
 #
+# toggleLearnSpells false libera as magias por level em vez de por compra. Com
+# ele em true, o Canary exige que TODA magia instantanea tenha sido aprendida de
+# um NPC (spells.cpp:562). Em false, so as que se declaram needLearn(true)
+# continuam exigindo — 18 das 200, todas de quest ou fim de jogo (avatares,
+# great death beam, executioners throw).
+#
+# Os requisitos continuam de pe: level, magic level, vocacao e mana sao checados
+# antes e em separado (spells.cpp:539).
+#
 # basespeed 220 dobra a velocidade base das vocacoes. A velocidade final e
 # basespeed + (level - 1), entao o ganho e de +110 em qualquer nivel: no level 1
 # e o dobro exato, no level 100 fica ~1,5x. Dobrar em todos os niveis exigiria
@@ -30,11 +39,13 @@ FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c
 RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 3/' \
            -e 's/^rateExp = .*/rateExp = 50/' \
            -e 's/^freePremium = .*/freePremium = true/' \
+           -e 's/^toggleLearnSpells = .*/toggleLearnSpells = false/' \
            /canary/config.lua \
  && sed -i 's/basespeed="110"/basespeed="220"/g' \
            /canary/data/XML/vocations.xml \
  && grep -qx 'rateSpawn = 3' /canary/config.lua \
  && grep -qx 'rateExp = 50' /canary/config.lua \
  && grep -qx 'freePremium = true' /canary/config.lua \
+ && grep -qx 'toggleLearnSpells = false' /canary/config.lua \
  && ! grep -q 'basespeed="110"' /canary/data/XML/vocations.xml \
  && echo "taxas do Vethara aplicadas"
