@@ -36,9 +36,9 @@ export default function Download() {
     <section className="secao">
       <h1>Baixar o client</h1>
       <p style={{ color: 'var(--ink-2)', maxWidth: '34rem' }}>
-        Descompacte a pasta inteira e execute <code>otclient.exe</code>. Na primeira
-        vez ele baixa os arquivos gráficos do jogo sozinho — são cerca de 395 MB,
-        e só acontece uma vez.
+        Descompacte a pasta inteira e execute <code>otclient.exe</code>. O pacote já
+        vem completo, com os arquivos gráficos do jogo — não há nada para baixar
+        depois.
       </p>
 
       <div className="acoes" style={{ margin: '1.5rem 0' }}>
