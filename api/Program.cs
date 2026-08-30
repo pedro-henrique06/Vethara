@@ -1,5 +1,6 @@
 using System.Data;
 using MySqlConnector;
+using Vethara;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -160,6 +161,45 @@ app.MapGet("/api/noticias", async (DbFactory db, int limite = 5) =>
         });
     }
     return Results.Ok(lista);
+});
+
+app.MapPost("/api/contas", async (DbFactory db, NovaConta corpo) =>
+{
+    var erro = Contas.Validar(corpo);
+    if (erro is not null) return Results.BadRequest(new { erro });
+
+    var email = corpo.Email!.Trim().ToLowerInvariant();
+    var personagem = corpo.Personagem!.Trim();
+
+    await using var c = await db.OpenAsync();
+
+    // O login-server casa apenas pelo campo email, e o schema do Canary nao poe
+    // indice unico nele. Sem esta checagem, dois cadastros com o mesmo email
+    // deixariam o segundo jogador sem conseguir entrar.
+    if (await Contas.EmailEmUsoAsync(c, email))
+        return Results.Conflict(new { erro = "Já existe uma conta com esse e-mail." });
+
+    if (await Contas.PersonagemEmUsoAsync(c, personagem))
+        return Results.Conflict(new { erro = "Esse nome de personagem já está em uso." });
+
+    var apelido = await Contas.ApelidoLivreAsync(c, email);
+
+    try
+    {
+        await Contas.CriarAsync(c, email, corpo.Senha!, apelido, personagem, corpo.Sexo);
+    }
+    catch (MySqlException e) when (e.Number == 1062)
+    {
+        // Corrida entre a checagem e o insert: alguem cadastrou o mesmo nome no meio.
+        return Results.Conflict(new { erro = "Esse nome acabou de ser registrado por outra pessoa. Escolha outro." });
+    }
+
+    return Results.Created("/api/contas", new
+    {
+        email,
+        personagem,
+        mensagem = "Conta criada. Use o e-mail e a senha para entrar no jogo."
+    });
 });
 
 // Usado pelo healthcheck do compose: responde 200 só se o banco estiver acessível.

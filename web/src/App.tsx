@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Highscores from './pages/Highscores'
 import Online from './pages/Online'
 import Download from './pages/Download'
+import CriarConta from './pages/CriarConta'
 
 function Topo() {
   const [status, setStatus] = useState<Status | null>(null)
@@ -29,6 +30,7 @@ function Topo() {
           <NavLink to="/highscores" className={classe}>Ranking</NavLink>
           <NavLink to="/online" className={classe}>Online</NavLink>
           <NavLink to="/download" className={classe}>Download</NavLink>
+          <NavLink to="/criar-conta" className={classe}>Criar conta</NavLink>
           <a href="/aac">Minha conta</a>
         </nav>
         {status && (
@@ -52,6 +54,7 @@ export default function App() {
           <Route path="/highscores" element={<Highscores />} />
           <Route path="/online" element={<Online />} />
           <Route path="/download" element={<Download />} />
+          <Route path="/criar-conta" element={<CriarConta />} />
           <Route path="*" element={
             <div className="aviso">
               Página não encontrada. <Link to="/">Voltar ao início</Link>.

@@ -192,3 +192,49 @@ tbody tr:hover { background: var(--surface); }
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* ---------- formulário ---------- */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 26rem;
+}
+
+.formulario label { display: flex; flex-direction: column; gap: 0.35rem; }
+.formulario label > span { font-size: 0.9rem; color: var(--ink-2); }
+
+.formulario input[type="text"],
+.formulario input[type="email"],
+.formulario input[type="password"] {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--ink);
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+}
+.formulario input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.formulario small { color: var(--muted); font-size: 0.82rem; }
+
+.formulario fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.formulario legend { font-size: 0.9rem; color: var(--ink-2); padding: 0; }
+
+.opcoes { display: flex; gap: 1.25rem; }
+.radio { flex-direction: row !important; align-items: center; gap: 0.45rem !important; }
+.radio span { color: var(--ink); font-size: 0.95rem; }
+
+.formulario button { border: 0; cursor: pointer; font: inherit; align-self: flex-start; }
+.formulario button:disabled { opacity: 0.6; cursor: default; }

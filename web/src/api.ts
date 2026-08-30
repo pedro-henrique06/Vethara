@@ -34,7 +34,29 @@ async function buscar<T>(caminho: string): Promise<T> {
   return r.json() as Promise<T>
 }
 
+export type NovaConta = {
+  email: string
+  senha: string
+  personagem: string
+  sexo: number
+}
+
+async function enviar<T>(caminho: string, corpo: unknown): Promise<T> {
+  const r = await fetch(`/api${caminho}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corpo)
+  })
+  const dados = await r.json().catch(() => null)
+  if (!r.ok) {
+    // A API devolve { erro } com texto pronto para o jogador ler.
+    throw new Error(dados?.erro ?? 'Não foi possível concluir. Tente novamente.')
+  }
+  return dados as T
+}
+
 export const api = {
+  criarConta: (c: NovaConta) => enviar<{ mensagem: string }>('/contas', c),
   status: () => buscar<Status>('/status'),
   online: () => buscar<Jogador[]>('/online'),
   highscores: (pagina = 1) => buscar<Posicao[]>(`/highscores?pagina=${pagina}`),

@@ -23,7 +23,7 @@ export default function Home() {
         </p>
         <div className="acoes">
           <Link className="botao" to="/download">Baixar o client</Link>
-          <a className="botao vazado" href="/aac">Criar conta</a>
+          <Link className="botao vazado" to="/criar-conta">Criar conta</Link>
         </div>
       </section>
 
