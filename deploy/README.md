@@ -143,20 +143,9 @@ cp otclient.exe init.lua /tmp/vethara-client/
 # compacte /tmp/vethara-client como vethara-client.zip
 ```
 
-Envie para o VPS:
-
-```bash
-ssh tibia@vethara.com.br "mkdir -p ~/Vethara/download"
-scp vethara-client.zip tibia@vethara.com.br:~/Vethara/download/
-```
-
-O Caddy passa a servir o arquivo assim que ele aparece na pasta — nao precisa
-reiniciar nada. Publique o **SHA-256** junto, para o jogador conferir que baixou o
-arquivo certo:
-
-```bash
-sha256sum vethara-client.zip
-```
+A partir dai a publicacao e automatica: crie um **release no GitHub** com o zip
+anexado como `vethara-client.zip` e o workflow leva ao VPS sozinho, calcula o
+SHA-256 e atualiza a pagina de download. Passo a passo em [CICD.md](CICD.md).
 
 ## Site: React + API .NET
 

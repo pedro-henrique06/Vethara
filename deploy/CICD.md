@@ -102,3 +102,85 @@ cd ~/Vethara
 docker compose ps
 docker compose logs --tail 50 api
 ```
+
+## Publicar o client
+
+O client não é compilado na pipeline: o `otclient.exe` sai do MSVC no Windows,
+com vcpkg, e runner Linux não reproduz isso. O que está automatizado é a
+**publicação** — a parte que era um `scp` manual.
+
+O fluxo passa a ser:
+
+### 1. Gerar o zip na sua máquina, como já fazia
+
+```bash
+cd client-modern
+git archive HEAD | tar -x -C /tmp/vethara-client
+cp otclient.exe init.lua /tmp/vethara-client/
+# compacte /tmp/vethara-client como vethara-client.zip
+```
+
+### 2. Criar um release no GitHub
+
+**Releases → Draft a new release**, crie uma tag (`v1.0.0`, `v1.1.0`, …), e anexe
+o zip. O nome do arquivo precisa ser exatamente **`vethara-client.zip`** — é por
+ele que o VPS procura.
+
+### 3. Publicar
+
+Ao publicar o release, o workflow **Publicar client** dispara sozinho. Ele:
+
+1. confere que o zip está mesmo anexado, antes de tocar no VPS;
+2. manda o VPS baixar o arquivo direto do GitHub;
+3. confere que o site já está servindo aquela versão.
+
+Para republicar uma versão antiga — um rollback — use **Actions → Publicar client
+→ Run workflow** e informe a tag.
+
+### Por que o VPS baixa em vez de receber
+
+O zip nunca passa pelo runner. São 41 MB que não sobem e não descem, e, mais
+importante, não existe caminho de escrita arbitrária do GitHub para dentro do
+servidor: a chave só consegue pedir `client <tag>`, e o script decide sozinho
+qual URL buscar e onde gravar.
+
+A troca do arquivo é um `mv` dentro da mesma partição, que é atômico — quem
+estiver baixando durante a publicação recebe a versão antiga inteira, nunca um
+zip pela metade.
+
+### O hash na página de download
+
+O `publicar-client.sh` grava um `versao.json` junto do zip, com tag, tamanho,
+data e SHA-256, e a página de download lê dali.
+
+Antes isso era um hash fixo no código React. O risco era concreto: publicar um
+client novo e esquecer de trocar o hash faria o jogador que confere concluir que
+baixou um arquivo adulterado.
+
+Enquanto não houver nenhum release publicado, a página omite versão e hash — ela
+prefere não mostrar nada a mostrar um valor velho. Se quiser preencher os dados
+do zip que já está no ar sem cortar um release:
+
+```bash
+cd ~/Vethara/download
+printf '{\n  "versao": "manual",\n  "arquivo": "vethara-client.zip",\n  "tamanho": %s,\n  "sha256": "%s",\n  "publicado": "%s"\n}\n' \
+  "$(stat -c %s vethara-client.zip)" \
+  "$(sha256sum vethara-client.zip | cut -d' ' -f1)" \
+  "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > versao.json
+```
+
+### Se falhar
+
+**`vethara-client.zip nao encontrado`:** o release existe mas o zip não foi
+anexado, ou foi anexado com outro nome. Nada foi alterado no VPS.
+
+**`arquivo pequeno demais`:** o VPS baixou uma página de erro em vez do zip. O
+arquivo antigo continua no ar — o script só troca depois de validar.
+
+**`o site ainda nao esta servindo <tag>`:** o download foi feito mas o Caddy está
+servindo outra coisa. Confira no VPS:
+
+```bash
+cat ~/Vethara/download/versao.json
+ls -la ~/Vethara/download/
+```

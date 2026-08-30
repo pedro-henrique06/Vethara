@@ -1,0 +1,90 @@
+name: Publicar client
+
+# O client nao entra no git: o zip tem dezenas de MB e o exe e compilado com
+# MSVC no Windows, que runner Linux nao reproduz. Entao a compilacao continua
+# na sua maquina, e o que este workflow automatiza e a publicacao: voce anexa o
+# zip a um release e o VPS busca de la.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag do release a publicar (ex: v1.0.0)'
+        required: true
+
+concurrency:
+  group: publicar-client
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Publicar no VPS
+    runs-on: ubuntu-latest
+    environment: producao
+    steps:
+      # A tag vem do evento ou do formulario. Passa por env e nunca por ${{ }}
+      # dentro do run: interpolacao direta deixaria quem abre o formulario
+      # escrever shell dentro do job.
+      - name: Definir a tag
+        env:
+          TAG_RELEASE: ${{ github.event.release.tag_name }}
+          TAG_MANUAL: ${{ inputs.tag }}
+        run: |
+          TAG="${TAG_RELEASE:-$TAG_MANUAL}"
+          if [ -z "$TAG" ]; then
+            echo "nenhuma tag informada." >&2
+            exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Publicando $TAG"
+
+      - name: Conferir que o release tem o zip
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          # Antes de mexer no VPS: se o zip nao foi anexado ao release, o erro
+          # aparece aqui, e nao depois de ja ter comecado a troca do arquivo.
+          URL="https://github.com/$REPO/releases/download/$TAG/vethara-client.zip"
+          codigo=$(curl -sIL -o /dev/null -w '%{http_code}' "$URL")
+          if [ "$codigo" != "200" ]; then
+            echo "vethara-client.zip nao encontrado em $TAG (HTTP $codigo)." >&2
+            echo "Anexe o zip ao release com esse nome exato e rode de novo." >&2
+            exit 1
+          fi
+
+      - name: Preparar o acesso SSH
+        env:
+          CHAVE: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$CHAVE" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          # Chave publica do host fixada, em vez de ssh-keyscan — aceitar o que
+          # o servidor apresentar na hora e confiar em quem atender.
+          # SHA256:WdmPWG2mw70lcsAKoBY1aIAFnYJFdreGnobi35eZ85E
+          echo "vethara.com.br ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA5beRBAMi0Uv3dBTIkvBfumriRTz6tRHtUzZnc3zyal" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Instalar o client no VPS
+        env:
+          USUARIO: ${{ secrets.VPS_USER }}
+          HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          # A chave no VPS esta presa a um command= fixo. "client <tag>" nao e
+          # executado la: e comparado com uma lista de acoes permitidas.
+          ssh -i ~/.ssh/deploy -o BatchMode=yes "$USUARIO@$HOST" "client $TAG"
+
+      - name: Conferir o que ficou publicado
+        run: |
+          # O VPS grava versao.json junto do zip. Se a versao servida nao for a
+          # que pedimos, o arquivo antigo continua no ar e o job precisa falhar.
+          publicado=$(curl -fsS --max-time 20 https://vethara.com.br/download/versao.json)
+          echo "$publicado"
+          if ! echo "$publicado" | grep -q "\"versao\": \"$TAG\""; then
+            echo "o site ainda nao esta servindo $TAG." >&2
+            exit 1
+          fi
+          codigo=$(curl -sIL -o /dev/null -w '%{http_code}' --max-time 30 https://vethara.com.br/download/vethara-client.zip)
+          [ "$codigo" = "200" ] || { echo "o zip nao esta acessivel (HTTP $codigo)." >&2; exit 1; }
+          echo "Client $TAG no ar."
