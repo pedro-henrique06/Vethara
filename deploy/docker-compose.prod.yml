@@ -18,6 +18,15 @@ services:
   server:
     build: ../servidor
     image: vethara-canary:local
+    # Sem este limite, o Canary crescendo demais leva o host inteiro junto: site,
+    # banco e SSH param de responder e nem `docker ps` roda, porque o kernel passa
+    # a gastar tudo tentando liberar memoria. Foi o que aconteceu em 31/08.
+    #
+    # Com o limite, quem morre e so este container, e o restart: unless-stopped o
+    # traz de volta. Perde-se alguns minutos de jogo em vez do servidor inteiro.
+    #
+    # 5G de 7,8G do host: sobra para o banco, o site e o sistema.
+    mem_limit: 5g
 
   # O banco nao e publicado pelo compose base. Aqui ele passa a escutar apenas em
   # 127.0.0.1 do VPS, o suficiente para um tunel SSH (DBeaver e afins). De fora

@@ -10,8 +10,9 @@
 # servidor de proposito, troque o sha256 abaixo.
 FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c2c6ec53618b3fed6f552762
 
-# rateSpawn 3 divide o tempo de respawn por 3: os 58.598 spawns de 90s do mapa
-# global passam a 30s, e os 24.228 de 60s vao a 20s.
+# rateSpawn 2 divide o tempo de respawn por 2: os 58.598 spawns de 90s do mapa
+# global passam a 45s, e os 24.228 de 60s vao a 30s. Estava em 3, e a populacao
+# viva que isso sustenta esgotou a memoria do VPS depois de sete horas.
 #
 # rateExp 50 e a experiencia final, nao um bonus sobre os stages: com
 # rateUseStages = false o Canary usa rateExp direto e ignora o data/stages.lua
@@ -43,7 +44,7 @@ FROM ghcr.io/opentibiabr/canary@sha256:b64263764d88decfc0b345cb618371d14e044897c
 # basespeed + (level - 1), entao o ganho e de +110 em qualquer nivel: no level 1
 # e o dobro exato, no level 100 fica ~1,5x. Dobrar em todos os niveis exigiria
 # script Lua recalculando a cada level up.
-RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 3/' \
+RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 2/' \
            -e 's/^rateExp = .*/rateExp = 50/' \
            -e 's/^freePremium = .*/freePremium = true/' \
            -e 's/^toggleLearnSpells = .*/toggleLearnSpells = false/' \
@@ -52,7 +53,7 @@ RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 3/' \
            /canary/data/XML/vocations.xml \
  && find /canary/data/scripts/spells -name '*.lua' \
       -exec sed -i 's/needLearn(true)/needLearn(false)/g' {} + \
- && grep -qx 'rateSpawn = 3' /canary/config.lua \
+ && grep -qx 'rateSpawn = 2' /canary/config.lua \
  && grep -qx 'rateExp = 50' /canary/config.lua \
  && grep -qx 'freePremium = true' /canary/config.lua \
  && grep -qx 'toggleLearnSpells = false' /canary/config.lua \
