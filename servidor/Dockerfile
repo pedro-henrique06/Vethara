@@ -60,3 +60,11 @@ RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 2/' \
  && ! grep -q 'basespeed="110"' /canary/data/XML/vocations.xml \
  && ! grep -rq 'needLearn(true)' /canary/data/scripts/spells \
  && echo "ajustes do Vethara aplicados"
+
+# Avisa o client de que a conta pode usar o menu de GM. O client nao tem como
+# saber o grupo sozinho — nada no protocolo conta isso —, entao o servidor manda
+# um extended opcode no login. Scripts em data/scripts sao carregados sozinhos.
+#
+# E conveniencia de interface, nao seguranca: o menu apenas digita /i, e o /i so
+# funciona para o grupo god.
+COPY scripts/menu_gm.lua /canary/data/scripts/creaturescripts/player/menu_gm.lua

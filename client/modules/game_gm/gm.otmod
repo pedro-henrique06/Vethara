@@ -1,0 +1,10 @@
+Module
+  name: game_gm
+  description: Menu de GM do Vethara - criar itens pelo nome
+  author: Vethara
+  sandboxed: true
+  scripts: [ gm ]
+  autoload: true
+  dependencies: [ game_interface, game_mainpanel ]
+  @onLoad: init()
+  @onUnload: terminate()

@@ -1,0 +1,123 @@
+GmSlot < UIItem
+  size: 34 34
+  padding: 1
+  image-source: /images/ui/item
+  virtual: true
+  focusable: true
+
+  $focus:
+    border-color: #f0ad4d
+    border-width: 2
+
+GmInfo < Label
+  text-align: left
+  height: 16
+  color: #aaaaaa
+
+MainWindow
+  id: gmWindow
+  !text: tr('Menu de GM')
+  size: 480 420
+  @onEscape: modules.game_gm.toggle()
+
+  Label
+    id: rotuloBusca
+    anchors.top: parent.top
+    anchors.left: parent.left
+    width: 60
+    height: 22
+    text-align: left
+    !text: tr('Buscar')
+
+  TextEdit
+    id: busca
+    anchors.top: parent.top
+    anchors.left: rotuloBusca.right
+    anchors.right: parent.right
+    height: 22
+
+  # Grade de tamanho fixo: os slots sao criados uma unica vez e reaproveitados a
+  # cada pagina. Criar e destruir widgets a cada busca seria lento e e o tipo de
+  # coisa que ja travou este client uma vez.
+  Panel
+    id: grade
+    anchors.top: busca.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 8
+    height: 220
+    layout:
+      type: grid
+      cell-size: 36 36
+      cell-spacing: 2
+      num-columns: 12
+
+  GmInfo
+    id: selecionado
+    anchors.top: grade.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 8
+    !text: tr('Nenhum item selecionado')
+
+  GmInfo
+    id: paginacao
+    anchors.top: selecionado.bottom
+    anchors.left: parent.left
+    width: 200
+    margin-top: 4
+
+  Button
+    id: anterior
+    anchors.top: selecionado.bottom
+    anchors.right: proxima.left
+    margin-top: 2
+    margin-right: 4
+    width: 30
+    !text: '<'
+
+  Button
+    id: proxima
+    anchors.top: selecionado.bottom
+    anchors.right: parent.right
+    margin-top: 2
+    width: 30
+    !text: '>'
+
+  HorizontalSeparator
+    id: separador
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: criar.top
+    margin-bottom: 8
+
+  Label
+    id: rotuloQtd
+    anchors.left: parent.left
+    anchors.bottom: parent.bottom
+    width: 76
+    height: 22
+    text-align: left
+    !text: tr('Quantidade')
+
+  SpinBox
+    id: quantidade
+    anchors.left: rotuloQtd.right
+    anchors.bottom: parent.bottom
+    width: 70
+
+  Button
+    id: criar
+    !text: tr('Criar')
+    anchors.left: quantidade.right
+    anchors.bottom: parent.bottom
+    margin-left: 8
+    width: 80
+
+  Button
+    id: fechar
+    !text: tr('Fechar')
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    width: 80
+    @onClick: modules.game_gm.toggle()
