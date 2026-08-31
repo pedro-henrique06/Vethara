@@ -1,13 +1,83 @@
-HelperSection < Label
+HelperTitulo < Label
   font: verdana-11px-rounded
   color: #f0ad4d
   text-align: left
-  height: 16
-  margin-top: 10
+  height: 18
 
-HelperRow < Panel
+HelperInfo < Label
+  text-align: left
+  height: 16
+  color: #aaaaaa
+
+# Linha com magia digitada e limiar de porcentagem.
+HelperLinhaMagia < Panel
+  height: 26
+
+  CheckBox
+    id: ativo
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: 18
+
+  TextEdit
+    id: valor
+    anchors.left: ativo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 120
+
+  SpinBox
+    id: porcento
+    anchors.left: valor.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 58
+
+  Label
+    id: sufixo
+    anchors.left: porcento.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 4
+    width: 16
+    text-align: left
+    !text: '%'
+
+# Linha com pocao escolhida numa lista.
+HelperLinhaPocao < Panel
+  height: 26
+
+  CheckBox
+    id: ativo
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: 18
+
+  ComboBox
+    id: opcao
+    anchors.left: ativo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 160
+
+  SpinBox
+    id: porcento
+    anchors.left: opcao.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 58
+
+  Label
+    id: sufixo
+    anchors.left: porcento.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 4
+    width: 16
+    text-align: left
+    !text: '%'
+
+# Linha de liga-desliga, sem parametro.
+HelperLinhaSimples < Panel
   height: 24
-  margin-top: 2
 
   CheckBox
     id: ativo
@@ -20,64 +90,166 @@ HelperRow < Panel
     anchors.left: ativo.right
     anchors.verticalCenter: parent.verticalCenter
     margin-left: 6
-    width: 60
+    anchors.right: parent.right
     text-align: left
+
+# Linha com texto livre, sem porcentagem.
+HelperLinhaTexto < Panel
+  height: 26
+
+  CheckBox
+    id: ativo
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: 18
 
   TextEdit
     id: valor
-    anchors.left: rotulo.right
-    anchors.verticalCenter: parent.verticalCenter
-    margin-left: 4
-    width: 150
-
-  ComboBox
-    id: opcao
-    anchors.left: rotulo.right
-    anchors.verticalCenter: parent.verticalCenter
-    margin-left: 4
-    width: 150
-    visible: false
-
-  SpinBox
-    id: porcento
-    anchors.left: valor.right
+    anchors.left: ativo.right
     anchors.verticalCenter: parent.verticalCenter
     margin-left: 6
-    width: 70
-
-  Label
-    id: sufixo
-    anchors.left: porcento.right
-    anchors.verticalCenter: parent.verticalCenter
-    margin-left: 4
-    text-align: left
-    width: 90
+    width: 160
 
 MainWindow
   id: helperWindow
   !text: tr('Assistente')
-  size: 470 500
+  size: 780 276
   @onEscape: modules.game_helper.toggle()
 
-  ScrollablePanel
-    id: conteudo
+  # ----- coluna da esquerda: quem sou eu e o que esta ligado -----
+  Label
+    id: personagem
     anchors.top: parent.top
+    anchors.left: parent.left
+    width: 200
+    height: 18
+    text-align: left
+    font: verdana-11px-rounded
+
+  HelperInfo
+    id: status
+    anchors.top: personagem.bottom
+    anchors.left: parent.left
+    width: 200
+    margin-top: 2
+
+  HelperTitulo
+    id: tituloHaste
+    anchors.top: status.bottom
+    anchors.left: parent.left
+    width: 200
+    margin-top: 14
+    !text: tr('Auto haste')
+
+  HelperLinhaTexto
+    id: haste
+    anchors.top: tituloHaste.bottom
+    anchors.left: parent.left
+    width: 200
+    margin-top: 2
+
+  HelperTitulo
+    id: tituloOutros
+    anchors.top: haste.bottom
+    anchors.left: parent.left
+    width: 200
+    margin-top: 14
+    !text: tr('Outras ferramentas')
+
+  HelperLinhaSimples
+    id: comer
+    anchors.top: tituloOutros.bottom
+    anchors.left: parent.left
+    width: 200
+    margin-top: 2
+
+  HelperLinhaSimples
+    id: reconectar
+    anchors.top: comer.bottom
+    anchors.left: parent.left
+    width: 200
+
+  # ----- coluna do meio: cura por magia e treino de mana -----
+  HelperTitulo
+    id: tituloMagias
+    anchors.top: parent.top
+    anchors.left: personagem.right
+    margin-left: 16
+    width: 240
+    !text: tr('Cura por magia')
+
+  HelperLinhaMagia
+    id: magia1
+    anchors.top: tituloMagias.bottom
+    anchors.left: tituloMagias.left
+    width: 240
+    margin-top: 2
+
+  HelperLinhaMagia
+    id: magia2
+    anchors.top: magia1.bottom
+    anchors.left: tituloMagias.left
+    width: 240
+
+  HelperLinhaMagia
+    id: magia3
+    anchors.top: magia2.bottom
+    anchors.left: tituloMagias.left
+    width: 240
+
+  HelperTitulo
+    id: tituloMana
+    anchors.top: magia3.bottom
+    anchors.left: tituloMagias.left
+    width: 240
+    margin-top: 14
+    !text: tr('Treino de mana (mana acima de)')
+
+  HelperLinhaMagia
+    id: mana
+    anchors.top: tituloMana.bottom
+    anchors.left: tituloMagias.left
+    width: 240
+    margin-top: 2
+
+  # ----- coluna da direita: cura por pocao -----
+  HelperTitulo
+    id: tituloPocoes
+    anchors.top: parent.top
+    anchors.left: tituloMagias.right
+    margin-left: 16
+    anchors.right: parent.right
+    !text: tr('Cura por pocao')
+
+  HelperLinhaPocao
+    id: pocao1
+    anchors.top: tituloPocoes.bottom
+    anchors.left: tituloPocoes.left
+    anchors.right: parent.right
+    margin-top: 2
+
+  HelperLinhaPocao
+    id: pocao2
+    anchors.top: pocao1.bottom
+    anchors.left: tituloPocoes.left
+    anchors.right: parent.right
+
+  HelperLinhaPocao
+    id: pocao3
+    anchors.top: pocao2.bottom
+    anchors.left: tituloPocoes.left
+    anchors.right: parent.right
+
+  HelperInfo
+    id: aviso
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.bottom: separador.top
-    margin-bottom: 8
-    vertical-scrollbar: barra
-    layout:
-      type: verticalBox
+    margin-bottom: 6
+    height: 16
+    !text: tr('Age no maximo uma vez por segundo, para nao esbarrar no limite de fala do servidor.')
 
-  VerticalScrollBar
-    id: barra
-    anchors.top: conteudo.top
-    anchors.bottom: conteudo.bottom
-    anchors.right: parent.right
-    step: 24
-    pixels-scroll: true
-
+  # ----- rodape -----
   HorizontalSeparator
     id: separador
     anchors.left: parent.left
@@ -85,19 +257,27 @@ MainWindow
     anchors.bottom: fechar.top
     margin-bottom: 8
 
-  Label
-    id: aviso
+  Button
+    id: exportar
+    !text: tr('Exportar')
     anchors.left: parent.left
     anchors.bottom: parent.bottom
-    width: 300
-    text-align: left
-    color: #808080
-    !text: tr('O assistente age uma vez por segundo, no maximo.')
+    width: 80
+    @onClick: modules.game_helper.exportar()
+
+  Button
+    id: importar
+    !text: tr('Importar')
+    anchors.left: exportar.right
+    anchors.bottom: parent.bottom
+    margin-left: 6
+    width: 80
+    @onClick: modules.game_helper.importar()
 
   Button
     id: fechar
     !text: tr('Fechar')
     anchors.right: parent.right
     anchors.bottom: parent.bottom
-    width: 64
+    width: 80
     @onClick: modules.game_helper.toggle()

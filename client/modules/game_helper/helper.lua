@@ -7,6 +7,11 @@
 -- O intervalo minimo entre magias existe por um motivo concreto: magia e enviada
 -- como fala, e o servidor corta com maxMessageBuffer = 4. Sem o limite, o
 -- assistente muta o proprio jogador.
+--
+-- A tela e toda estatica no helper.otui, e este arquivo so amarra os widgets por
+-- id. A versao anterior criava as linhas em tempo de execucao dentro de um painel
+-- com fit-children, e aquilo travava o client inteiro num laco de layout: a
+-- ancora fixava a altura e o fit-children mandava ajustar ao conteudo.
 
 local janela = nil
 local botaoTopo = nil
@@ -16,6 +21,8 @@ local INTERVALO_TIQUE = 200 -- ms entre verificacoes
 local ESPERA_MAGIA = 1000 -- ms minimo entre falas, por causa do maxMessageBuffer
 local ESPERA_POCAO = 1000
 local ESPERA_COMIDA = 60000
+
+local ARQUIVO_EXPORTADO = '/assistente.json'
 
 local ultimaMagia = 0
 local ultimaPocao = 0
@@ -155,21 +162,54 @@ local function verificar()
     end
 end
 
+local function quantosAtivos()
+    local n = 0
+    for _, m in ipairs(config.magias) do
+        if m.ativo then n = n + 1 end
+    end
+    for _, q in ipairs(config.pocoes) do
+        if q.ativo then n = n + 1 end
+    end
+    if config.mana.ativo then n = n + 1 end
+    if config.haste.ativo then n = n + 1 end
+    if config.comida.ativo then n = n + 1 end
+    if config.reconectar.ativo then n = n + 1 end
+    return n
+end
+
+local function atualizarCabecalho()
+    if not janela then
+        return
+    end
+    local p = g_game.getLocalPlayer()
+    janela.personagem:setText(p and p:getName() or tr('Sem personagem'))
+
+    local n = quantosAtivos()
+    if n == 0 then
+        janela.status:setText(tr('Status: nada ligado'))
+        janela.status:setColor('#aaaaaa')
+    else
+        janela.status:setText(tr('Status: ativo') .. ' (' .. n .. ')')
+        janela.status:setColor('#5fbf5f')
+    end
+end
+
 local function salvar()
     g_settings.setNode('vethara_helper', config)
     g_settings.save()
+    atualizarCabecalho()
 end
 
-local function carregar()
-    local salvo = g_settings.getNode('vethara_helper')
-    if not salvo then
+-- Mesclagem campo a campo, e nao substituicao da tabela: um arquivo salvo por uma
+-- versao anterior nao pode apagar opcoes novas nem derrubar o modulo por chave
+-- faltando. Vale tanto para g_settings quanto para o arquivo importado.
+local function aplicar(salvo)
+    if type(salvo) ~= 'table' then
         return
     end
-    -- Mesclagem campo a campo: um arquivo salvo por uma versao anterior nao pode
-    -- apagar opcoes novas nem derrubar o modulo por chave faltando.
     for i, m in ipairs(config.magias) do
         local s = salvo.magias and salvo.magias[i]
-        if s then
+        if type(s) == 'table' then
             m.ativo = s.ativo == true
             m.texto = s.texto or m.texto
             m.porcento = tonumber(s.porcento) or m.porcento
@@ -177,150 +217,156 @@ local function carregar()
     end
     for i, q in ipairs(config.pocoes) do
         local s = salvo.pocoes and salvo.pocoes[i]
-        if s then
+        if type(s) == 'table' then
             q.ativo = s.ativo == true
             q.id = tonumber(s.id) or q.id
             q.porcento = tonumber(s.porcento) or q.porcento
         end
     end
-    if salvo.mana then
+    if type(salvo.mana) == 'table' then
         config.mana.ativo = salvo.mana.ativo == true
         config.mana.texto = salvo.mana.texto or config.mana.texto
         config.mana.porcento = tonumber(salvo.mana.porcento) or config.mana.porcento
     end
-    if salvo.haste then
+    if type(salvo.haste) == 'table' then
         config.haste.ativo = salvo.haste.ativo == true
         config.haste.texto = salvo.haste.texto or config.haste.texto
     end
-    if salvo.comida then
+    if type(salvo.comida) == 'table' then
         config.comida.ativo = salvo.comida.ativo == true
     end
-    if salvo.reconectar then
+    if type(salvo.reconectar) == 'table' then
         config.reconectar.ativo = salvo.reconectar.ativo == true
     end
 end
 
-local function secao(texto)
-    local w = g_ui.createWidget('HelperSection', janela.conteudo)
-    w:setText(texto)
-    return w
-end
-
-local function linha(opcoes)
-    local w = g_ui.createWidget('HelperRow', janela.conteudo)
-    w.rotulo:setText(opcoes.rotulo)
-    w.sufixo:setText(opcoes.sufixo or '')
-    w.ativo:setChecked(opcoes.ativo == true)
-    w.ativo.onCheckChange = function(_, marcado)
-        opcoes.aoMarcar(marcado)
+-- Amarra uma linha do .otui a um pedaco da configuracao. Nenhum widget e criado
+-- aqui: todos ja existem na tela, e isto so preenche e liga os eventos.
+local function ligarLinha(linha, opcoes)
+    linha.ativo:setChecked(opcoes.lerAtivo())
+    linha.ativo.onCheckChange = function(_, marcado)
+        opcoes.gravarAtivo(marcado)
         salvar()
     end
 
-    if opcoes.texto ~= nil then
-        w.valor:setText(opcoes.texto)
-        w.valor.onTextChange = function(_, t)
-            opcoes.aoTexto(t)
+    if opcoes.lerTexto then
+        linha.valor:setText(opcoes.lerTexto())
+        linha.valor.onTextChange = function(_, t)
+            opcoes.gravarTexto(t)
             salvar()
         end
-    else
-        w.valor:hide()
     end
 
-    if opcoes.pocao ~= nil then
-        w.valor:hide()
-        w.opcao:show()
+    if opcoes.lerPocao then
         for _, p in ipairs(POCOES) do
-            w.opcao:addOption(p.nome, p.id)
+            linha.opcao:addOption(p.nome, p.id)
         end
+        local atual = opcoes.lerPocao()
         for _, p in ipairs(POCOES) do
-            if p.id == opcoes.pocao then
-                w.opcao:setCurrentOption(p.nome)
+            if p.id == atual then
+                linha.opcao:setCurrentOption(p.nome)
                 break
             end
         end
-        w.opcao.onOptionChange = function(combo, texto, dados)
-            opcoes.aoPocao(tonumber(dados) or 0)
+        linha.opcao.onOptionChange = function(_, _, dados)
+            opcoes.gravarPocao(tonumber(dados) or 0)
             salvar()
         end
     end
 
-    if opcoes.porcento ~= nil then
-        w.porcento:setMinimum(1)
-        w.porcento:setMaximum(100)
-        w.porcento:setValue(opcoes.porcento)
-        w.porcento.onValueChange = function(_, v)
-            opcoes.aoPorcento(v)
+    if opcoes.lerPorcento then
+        linha.porcento:setMinimum(1)
+        linha.porcento:setMaximum(100)
+        linha.porcento:setValue(opcoes.lerPorcento())
+        linha.porcento.onValueChange = function(_, v)
+            opcoes.gravarPorcento(v)
             salvar()
         end
-    else
-        w.porcento:hide()
     end
 
-    return w
+    if opcoes.rotulo then
+        linha.rotulo:setText(opcoes.rotulo)
+    end
 end
 
-local function montar()
-    secao(tr('Cura por magia'))
-    for i, m in ipairs(config.magias) do
-        linha({
-            rotulo = tr('Magia'),
-            sufixo = '% ' .. tr('de vida ou menos'),
-            ativo = m.ativo,
-            texto = m.texto,
-            porcento = m.porcento,
-            aoMarcar = function(v) config.magias[i].ativo = v end,
-            aoTexto = function(t) config.magias[i].texto = t end,
-            aoPorcento = function(v) config.magias[i].porcento = v end
+local function ligarTela()
+    for i = 1, 3 do
+        ligarLinha(janela['magia' .. i], {
+            lerAtivo = function() return config.magias[i].ativo end,
+            gravarAtivo = function(v) config.magias[i].ativo = v end,
+            lerTexto = function() return config.magias[i].texto end,
+            gravarTexto = function(t) config.magias[i].texto = t end,
+            lerPorcento = function() return config.magias[i].porcento end,
+            gravarPorcento = function(v) config.magias[i].porcento = v end
+        })
+
+        ligarLinha(janela['pocao' .. i], {
+            lerAtivo = function() return config.pocoes[i].ativo end,
+            gravarAtivo = function(v) config.pocoes[i].ativo = v end,
+            lerPocao = function() return config.pocoes[i].id end,
+            gravarPocao = function(v) config.pocoes[i].id = v end,
+            lerPorcento = function() return config.pocoes[i].porcento end,
+            gravarPorcento = function(v) config.pocoes[i].porcento = v end
         })
     end
 
-    secao(tr('Cura por pocao'))
-    for i, q in ipairs(config.pocoes) do
-        linha({
-            rotulo = tr('Pocao'),
-            sufixo = '% ' .. tr('de vida ou menos'),
-            ativo = q.ativo,
-            pocao = q.id,
-            porcento = q.porcento,
-            aoMarcar = function(v) config.pocoes[i].ativo = v end,
-            aoPocao = function(v) config.pocoes[i].id = v end,
-            aoPorcento = function(v) config.pocoes[i].porcento = v end
-        })
+    ligarLinha(janela.mana, {
+        lerAtivo = function() return config.mana.ativo end,
+        gravarAtivo = function(v) config.mana.ativo = v end,
+        lerTexto = function() return config.mana.texto end,
+        gravarTexto = function(t) config.mana.texto = t end,
+        lerPorcento = function() return config.mana.porcento end,
+        gravarPorcento = function(v) config.mana.porcento = v end
+    })
+
+    ligarLinha(janela.haste, {
+        lerAtivo = function() return config.haste.ativo end,
+        gravarAtivo = function(v) config.haste.ativo = v end,
+        lerTexto = function() return config.haste.texto end,
+        gravarTexto = function(t) config.haste.texto = t end
+    })
+
+    ligarLinha(janela.comer, {
+        rotulo = tr('Comer a cada 60 segundos'),
+        lerAtivo = function() return config.comida.ativo end,
+        gravarAtivo = function(v) config.comida.ativo = v end
+    })
+
+    ligarLinha(janela.reconectar, {
+        rotulo = tr('Reconectar se a conexao cair'),
+        lerAtivo = function() return config.reconectar.ativo end,
+        gravarAtivo = function(v) config.reconectar.ativo = v end
+    })
+
+end
+
+function exportar()
+    local ok, texto = pcall(json.encode, config)
+    if not ok then
+        return
     end
+    g_resources.writeFileContents(ARQUIVO_EXPORTADO, texto)
+    modules.game_textmessage.displayStatusMessage(
+        tr('Assistente exportado para') .. ' ' .. ARQUIVO_EXPORTADO)
+end
 
-    secao(tr('Treino de mana'))
-    linha({
-        rotulo = tr('Magia'),
-        sufixo = '% ' .. tr('de mana ou mais'),
-        ativo = config.mana.ativo,
-        texto = config.mana.texto,
-        porcento = config.mana.porcento,
-        aoMarcar = function(v) config.mana.ativo = v end,
-        aoTexto = function(t) config.mana.texto = t end,
-        aoPorcento = function(v) config.mana.porcento = v end
-    })
-
-    secao(tr('Utilidades'))
-    linha({
-        rotulo = tr('Haste'),
-        sufixo = tr('quando estiver sem'),
-        ativo = config.haste.ativo,
-        texto = config.haste.texto,
-        aoMarcar = function(v) config.haste.ativo = v end,
-        aoTexto = function(t) config.haste.texto = t end
-    })
-    linha({
-        rotulo = tr('Comer'),
-        sufixo = tr('a cada 60 segundos'),
-        ativo = config.comida.ativo,
-        aoMarcar = function(v) config.comida.ativo = v end
-    })
-    linha({
-        rotulo = tr('Reconectar'),
-        sufixo = tr('se a conexao cair'),
-        ativo = config.reconectar.ativo,
-        aoMarcar = function(v) config.reconectar.ativo = v end
-    })
+function importar()
+    if not g_resources.fileExists(ARQUIVO_EXPORTADO) then
+        modules.game_textmessage.displayStatusMessage(
+            tr('Nao encontrei') .. ' ' .. ARQUIVO_EXPORTADO)
+        return
+    end
+    local ok, dados = pcall(function()
+        return json.decode(g_resources.readFileContents(ARQUIVO_EXPORTADO))
+    end)
+    if not ok or type(dados) ~= 'table' then
+        modules.game_textmessage.displayStatusMessage(tr('Arquivo invalido'))
+        return
+    end
+    aplicar(dados)
+    ligarTela()
+    salvar()
+    modules.game_textmessage.displayStatusMessage(tr('Assistente importado'))
 end
 
 function toggle()
@@ -333,6 +379,7 @@ function toggle()
             botaoTopo:setOn(false)
         end
     else
+        atualizarCabecalho()
         janela:show()
         janela:raise()
         janela:focus()
@@ -345,6 +392,7 @@ end
 function onGameStart()
     reconectando = false
     ultimaComida = agora()
+    atualizarCabecalho()
     if not tique then
         tique = cycleEvent(verificar, INTERVALO_TIQUE)
     end
@@ -355,6 +403,7 @@ function onGameEnd()
         removeEvent(tique)
         tique = nil
     end
+    atualizarCabecalho()
     -- Reconexao com atraso e uma so tentativa por queda. Reconectar em laco
     -- transformaria um kick por regra numa enxurrada de logins.
     if config.reconectar.ativo and not reconectando then
@@ -371,8 +420,9 @@ function init()
     janela = g_ui.displayUI('helper')
     janela:hide()
 
-    carregar()
-    montar()
+    aplicar(g_settings.getNode('vethara_helper'))
+    ligarTela()
+    atualizarCabecalho()
 
     botaoTopo = modules.client_topmenu.addRightGameToggleButton('helperButton', tr('Assistente'),
         '/images/topbuttons/bot', toggle)
