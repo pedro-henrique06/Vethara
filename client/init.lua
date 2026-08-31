@@ -3,7 +3,13 @@
 
 -- updater
 Services = {
-    --updater = "http://localhost/api/updater.php", --./updater
+    -- Atualizacao automatica: no boot o client pede este manifesto, compara o
+    -- CRC32 do que tem em disco e baixa so o que mudou. Corrigir uma linha do
+    -- Assistente deixa de exigir que o jogador rebaixe o pacote de 254 MB.
+    --
+    -- Se a API estiver fora, o client mostra uma caixa de erro e abre normalmente
+    -- assim que o jogador clicar OK (Updater.abort chama loadModules).
+    updater = "https://vethara.com.br/api/updater", --./updater
     --status = "http://localhost/login.php", --./client_entergame | ./client_topmenu
     --websites = "http://localhost/?subtopic=accountmanagement", --./client_entergame "Forgot password and/or email"
     --createAccount = "http://localhost/clientcreateaccount.php", --./client_entergame -- createAccount.lua

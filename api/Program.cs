@@ -310,6 +310,15 @@ app.MapPost("/api/minha-conta/senha", async (DbFactory db, ClaimsPrincipal usuar
         : Results.BadRequest(new { erro = "A senha atual esta incorreta." });
 }).RequireAuthorization();
 
+// Manifesto de atualizacao do client. O modulo updater do OTClient chama isto no
+// boot, compara o CRC32 do que tem em disco e baixa so o que mudou.
+//
+// E POST porque e o que o client envia (HTTP.postJSON em updater.lua:220). O corpo
+// traz versao, build, os e plataforma; hoje o manifesto e o mesmo para todos, mas o
+// parametro fica recebido para o dia em que houver client por sistema.
+app.MapPost("/api/updater", async (IConfiguration config) =>
+    Results.Json(await Vethara.Api.Atualizador.ObterAsync(config)));
+
 // Usado pelo healthcheck do compose: responde 200 só se o banco estiver acessível.
 app.MapGet("/api/saude", async (DbFactory db) =>
 {

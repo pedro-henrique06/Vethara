@@ -50,6 +50,12 @@ services:
       CANARY_DB_PASSWORD: "${CANARY_DB_PASSWORD:-canary}"
       CANARY_SERVER_NAME: "${CANARY_SERVER_NAME:-Vethara}"
       VETHARA_JWT_SECRET: "${VETHARA_JWT_SECRET:-}"
+      VETHARA_DOMAIN: "${VETHARA_DOMAIN:?defina VETHARA_DOMAIN no .env}"
+      VETHARA_CLIENT_DIR: /client
+    volumes:
+      # So leitura: a API calcula o CRC32 desses arquivos para o manifesto do
+      # updater, e nao tem motivo nenhum para escrever neles.
+      - '../client:/client:ro'
     networks:
       - canary-net
     depends_on:
@@ -79,6 +85,7 @@ services:
       # e aplica a versao velha — sintoma dificil de diagnosticar.
       - '../deploy:/etc/caddy-conf:ro'
       - '../download:/srv/download:ro'
+      - '../client:/srv/client:ro'
       - 'caddy-data:/data'
       - 'caddy-config:/config'
     networks:

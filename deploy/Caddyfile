@@ -21,6 +21,17 @@
 		file_server browse
 	}
 
+	# Arquivos que o updater do client baixa. Servidos direto de client/ no
+	# repositorio, que ja esta no VPS depois do git pull — entao um push na main
+	# vira atualizacao de client sem nenhum passo a mais.
+	#
+	# handle_path remove o prefixo: /client/init.lua -> /srv/client/init.lua, que e
+	# exatamente o caminho que o manifesto anuncia.
+	handle_path /client/* {
+		root * /srv/client
+		file_server
+	}
+
 	# API do site novo.
 	handle /api/* {
 		reverse_proxy api:8080

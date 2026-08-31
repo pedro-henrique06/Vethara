@@ -12,6 +12,7 @@
          e com async de verdade. -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.11" />
   </ItemGroup>
 
 </Project>
