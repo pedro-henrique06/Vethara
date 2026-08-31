@@ -49,6 +49,10 @@ local function conferir()
         local item = p:getInventoryItem(slot)
         local id = item and item:getId() or 0
         if ultimo[slot] ~= id then
+            -- DIAGNOSTICO TEMPORARIO: error e o unico nivel que descarrega o
+            -- log na hora. Sai assim que a causa aparecer.
+            g_logger.error('[vethara] slot ' .. slot .. ': ' .. tostring(ultimo[slot]) ..
+                ' -> ' .. id)
             ultimo[slot] = id
             mudou = true
         end
@@ -74,7 +78,13 @@ function onGameEnd()
     ultimo = {}
 end
 
+local function aoMudarInventario(player, slot, item, oldItem)
+    g_logger.error('[vethara] evento onInventoryChange slot ' .. tostring(slot) ..
+        ': ' .. tostring(oldItem and oldItem:getId()) .. ' -> ' .. tostring(item and item:getId()))
+end
+
 function init()
+    connect(LocalPlayer, { onInventoryChange = aoMudarInventario })
     connect(g_game, {
         onGameStart = onGameStart,
         onGameEnd = onGameEnd
@@ -85,6 +95,7 @@ function init()
 end
 
 function terminate()
+    disconnect(LocalPlayer, { onInventoryChange = aoMudarInventario })
     disconnect(g_game, {
         onGameStart = onGameStart,
         onGameEnd = onGameEnd
