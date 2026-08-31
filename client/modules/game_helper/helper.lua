@@ -1,10 +1,12 @@
 -- Assistente do Vethara.
 --
 -- Equivalente ao helper oficial do Rubinot: uma tela fechada com cura por magia,
--- cura por pocao, treino de mana e utilidades. Nao e um bot de scripts — nao anda,
--- nao ataca, nao coleta. So automatiza o que o jogador faria apertando teclas.
+-- cura por item, runa no alvo, treino de mana e utilidades. Nao e um bot de
+-- scripts — nao anda, nao procura alvo, nao coleta. So automatiza o que o jogador
+-- faria apertando teclas, e a runa de ataque so dispara contra o alvo que ele
+-- mesmo escolheu.
 --
--- O intervalo minimo entre magias existe por um motivo concreto: magia e enviada
+-- O intervalo minimo entre acoes existe por um motivo concreto: magia e enviada
 -- como fala, e o servidor corta com maxMessageBuffer = 4. Sem o limite, o
 -- assistente muta o proprio jogador.
 --
@@ -16,32 +18,20 @@
 local janela = nil
 local botaoTopo = nil
 local tique = nil
+local pegadorMouse = nil
+local slotEscolhendo = nil
 
 local INTERVALO_TIQUE = 200 -- ms entre verificacoes
 local ESPERA_MAGIA = 1000 -- ms minimo entre falas, por causa do maxMessageBuffer
-local ESPERA_POCAO = 1000
+local ESPERA_ITEM = 1000
 local ESPERA_COMIDA = 60000
 
 local ARQUIVO_EXPORTADO = '/assistente.json'
 
 local ultimaMagia = 0
-local ultimaPocao = 0
+local ultimoItem = 0
 local ultimaComida = 0
 local reconectando = false
-
-local POCOES = {
-    { nome = 'Health Potion', id = 266 },
-    { nome = 'Strong Health Potion', id = 236 },
-    { nome = 'Great Health Potion', id = 239 },
-    { nome = 'Ultimate Health Potion', id = 7643 },
-    { nome = 'Supreme Health Potion', id = 23375 },
-    { nome = 'Mana Potion', id = 268 },
-    { nome = 'Strong Mana Potion', id = 237 },
-    { nome = 'Great Mana Potion', id = 238 },
-    { nome = 'Ultimate Mana Potion', id = 23373 },
-    { nome = 'Great Spirit Potion', id = 7642 },
-    { nome = 'Ultimate Spirit Potion', id = 23374 }
-}
 
 -- Tentadas em ordem: o servidor ignora id que o jogador nao tem, entao a primeira
 -- que ele carregar e a que vai ser comida.
@@ -53,10 +43,16 @@ local config = {
         { ativo = false, texto = 'exura gran', porcento = 60 },
         { ativo = false, texto = 'exura vita', porcento = 40 }
     },
-    pocoes = {
-        { ativo = false, id = 266, porcento = 70 },
-        { ativo = false, id = 236, porcento = 50 },
-        { ativo = false, id = 268, porcento = 30 }
+    -- Usados em si mesmo: pocao de vida, pocao de mana, runa de cura.
+    itens = {
+        { ativo = false, id = 0, porcento = 70 },
+        { ativo = false, id = 0, porcento = 50 },
+        { ativo = false, id = 0, porcento = 30 }
+    },
+    -- Usadas no alvo que o jogador esta atacando.
+    runas = {
+        { ativo = false, id = 0, porcento = 100 },
+        { ativo = false, id = 0, porcento = 100 }
     },
     mana = { ativo = false, texto = 'utevo lux', porcento = 90 },
     haste = { ativo = false, texto = 'utani hur' },
@@ -104,20 +100,21 @@ local function castar(texto)
     return true
 end
 
-local function beber(itemId)
-    if not itemId or itemId <= 0 then
+local function usarItem(itemId, alvo)
+    if not itemId or itemId <= 0 or not alvo then
         return false
     end
-    if agora() - ultimaPocao < ESPERA_POCAO then
+    if agora() - ultimoItem < ESPERA_ITEM then
         return false
     end
-    ultimaPocao = agora()
-    g_game.useInventoryItemWith(itemId, g_game.getLocalPlayer())
+    ultimoItem = agora()
+    g_game.useInventoryItemWith(itemId, alvo)
     return true
 end
 
--- Uma acao por tique, na ordem de urgencia: curar antes de treinar, treinar antes
--- de correr. Duas acoes no mesmo tique so serviriam para gastar o limite de fala.
+-- Uma acao por tique, na ordem de urgencia: curar antes de atacar, atacar antes
+-- de treinar mana, treinar antes de correr. Duas acoes no mesmo tique so
+-- serviriam para gastar o limite de fala mais rapido.
 local function verificar()
     local p = jogador()
     if not p then
@@ -134,10 +131,24 @@ local function verificar()
         end
     end
 
-    for _, q in ipairs(config.pocoes) do
-        if q.ativo and vida <= q.porcento then
-            if beber(q.id) then
+    for _, i in ipairs(config.itens) do
+        if i.ativo and i.id > 0 and vida <= i.porcento then
+            if usarItem(i.id, p) then
                 return
+            end
+        end
+    end
+
+    -- Runa de ataque so existe se o jogador ja escolheu um alvo. O assistente
+    -- nao procura alvo nenhum.
+    local alvo = g_game.getAttackingCreature()
+    if alvo then
+        local vidaAlvo = alvo:getHealthPercent()
+        for _, r in ipairs(config.runas) do
+            if r.ativo and r.id > 0 and vidaAlvo <= r.porcento then
+                if usarItem(r.id, alvo) then
+                    return
+                end
             end
         end
     end
@@ -167,8 +178,11 @@ local function quantosAtivos()
     for _, m in ipairs(config.magias) do
         if m.ativo then n = n + 1 end
     end
-    for _, q in ipairs(config.pocoes) do
-        if q.ativo then n = n + 1 end
+    for _, i in ipairs(config.itens) do
+        if i.ativo then n = n + 1 end
+    end
+    for _, r in ipairs(config.runas) do
+        if r.ativo then n = n + 1 end
     end
     if config.mana.ativo then n = n + 1 end
     if config.haste.ativo then n = n + 1 end
@@ -203,26 +217,32 @@ end
 -- Mesclagem campo a campo, e nao substituicao da tabela: um arquivo salvo por uma
 -- versao anterior nao pode apagar opcoes novas nem derrubar o modulo por chave
 -- faltando. Vale tanto para g_settings quanto para o arquivo importado.
+local function mesclarLista(destino, origem)
+    if type(origem) ~= 'table' then
+        return
+    end
+    for i, d in ipairs(destino) do
+        local s = origem[i]
+        if type(s) == 'table' then
+            d.ativo = s.ativo == true
+            d.porcento = tonumber(s.porcento) or d.porcento
+            if d.id ~= nil then
+                d.id = tonumber(s.id) or d.id
+            end
+            if d.texto ~= nil then
+                d.texto = s.texto or d.texto
+            end
+        end
+    end
+end
+
 local function aplicar(salvo)
     if type(salvo) ~= 'table' then
         return
     end
-    for i, m in ipairs(config.magias) do
-        local s = salvo.magias and salvo.magias[i]
-        if type(s) == 'table' then
-            m.ativo = s.ativo == true
-            m.texto = s.texto or m.texto
-            m.porcento = tonumber(s.porcento) or m.porcento
-        end
-    end
-    for i, q in ipairs(config.pocoes) do
-        local s = salvo.pocoes and salvo.pocoes[i]
-        if type(s) == 'table' then
-            q.ativo = s.ativo == true
-            q.id = tonumber(s.id) or q.id
-            q.porcento = tonumber(s.porcento) or q.porcento
-        end
-    end
+    mesclarLista(config.magias, salvo.magias)
+    mesclarLista(config.itens, salvo.itens)
+    mesclarLista(config.runas, salvo.runas)
     if type(salvo.mana) == 'table' then
         config.mana.ativo = salvo.mana.ativo == true
         config.mana.texto = salvo.mana.texto or config.mana.texto
@@ -237,6 +257,62 @@ local function aplicar(salvo)
     end
     if type(salvo.reconectar) == 'table' then
         config.reconectar.ativo = salvo.reconectar.ativo == true
+    end
+end
+
+-- Seletor por clique, o mesmo mecanismo das hotkeys do client: pega o mouse e
+-- resolve o item sob o cursor, seja no chao ou dentro de um container.
+local function aoSoltarMouse(self, posicao, botao)
+    local item = nil
+    if botao == MouseLeftButton then
+        local alvo = modules.game_interface.getRootPanel():recursiveGetChildByPos(posicao, false)
+        if alvo then
+            if alvo:getClassName() == 'UIGameMap' then
+                local piso = alvo:getTile(posicao)
+                if piso then
+                    local coisa = piso:getTopMoveThing()
+                    if coisa and coisa:isItem() then
+                        item = coisa
+                    end
+                end
+            elseif alvo:getClassName() == 'UIItem' and not alvo:isVirtual() then
+                item = alvo:getItem()
+            end
+        end
+    end
+
+    if item and slotEscolhendo then
+        slotEscolhendo.definir(item:getId())
+    end
+    slotEscolhendo = nil
+
+    if modules.client_options and modules.client_options.getOption('nativeCursor') then
+        g_window.restoreMouseCursor()
+    else
+        g_mouse.popCursor('target')
+    end
+    self:ungrabMouse()
+
+    if janela then
+        janela:show()
+        janela:raise()
+    end
+    return true
+end
+
+local function escolherItem(definir)
+    if g_ui.isMouseGrabbed() then
+        return
+    end
+    slotEscolhendo = { definir = definir }
+    if janela then
+        janela:hide()
+    end
+    pegadorMouse:grabMouse()
+    if modules.client_options and modules.client_options.getOption('nativeCursor') then
+        g_window.setSystemCursor('cross')
+    else
+        g_mouse.pushCursor('target')
     end
 end
 
@@ -257,20 +333,41 @@ local function ligarLinha(linha, opcoes)
         end
     end
 
-    if opcoes.lerPocao then
-        for _, p in ipairs(POCOES) do
-            linha.opcao:addOption(p.nome, p.id)
+    if opcoes.lerItem then
+        local function definir(id)
+            opcoes.gravarItem(id or 0)
+            if id and id > 0 then
+                linha.item:setItemId(id)
+            else
+                linha.item:clearItem()
+            end
+            salvar()
         end
-        local atual = opcoes.lerPocao()
-        for _, p in ipairs(POCOES) do
-            if p.id == atual then
-                linha.opcao:setCurrentOption(p.nome)
-                break
+
+        local atual = opcoes.lerItem()
+        if atual > 0 then
+            linha.item:setItemId(atual)
+        end
+
+        -- Arrastar da mochila para o quadro.
+        linha.item.onDrop = function(_, arrastado)
+            local coisa = arrastado and arrastado.currentDragThing
+            if coisa and coisa:isItem() then
+                definir(coisa:getId())
+                return true
             end
         end
-        linha.opcao.onOptionChange = function(_, _, dados)
-            opcoes.gravarPocao(tonumber(dados) or 0)
-            salvar()
+
+        -- Botao direito limpa o quadro.
+        linha.item.onMouseRelease = function(_, _, botao)
+            if botao == MouseRightButton then
+                definir(0)
+                return true
+            end
+        end
+
+        linha.escolher.onClick = function()
+            escolherItem(definir)
         end
     end
 
@@ -300,13 +397,24 @@ local function ligarTela()
             gravarPorcento = function(v) config.magias[i].porcento = v end
         })
 
-        ligarLinha(janela['pocao' .. i], {
-            lerAtivo = function() return config.pocoes[i].ativo end,
-            gravarAtivo = function(v) config.pocoes[i].ativo = v end,
-            lerPocao = function() return config.pocoes[i].id end,
-            gravarPocao = function(v) config.pocoes[i].id = v end,
-            lerPorcento = function() return config.pocoes[i].porcento end,
-            gravarPorcento = function(v) config.pocoes[i].porcento = v end
+        ligarLinha(janela['item' .. i], {
+            lerAtivo = function() return config.itens[i].ativo end,
+            gravarAtivo = function(v) config.itens[i].ativo = v end,
+            lerItem = function() return config.itens[i].id end,
+            gravarItem = function(v) config.itens[i].id = v end,
+            lerPorcento = function() return config.itens[i].porcento end,
+            gravarPorcento = function(v) config.itens[i].porcento = v end
+        })
+    end
+
+    for i = 1, 2 do
+        ligarLinha(janela['runa' .. i], {
+            lerAtivo = function() return config.runas[i].ativo end,
+            gravarAtivo = function(v) config.runas[i].ativo = v end,
+            lerItem = function() return config.runas[i].id end,
+            gravarItem = function(v) config.runas[i].id = v end,
+            lerPorcento = function() return config.runas[i].porcento end,
+            gravarPorcento = function(v) config.runas[i].porcento = v end
         })
     end
 
@@ -337,7 +445,6 @@ local function ligarTela()
         lerAtivo = function() return config.reconectar.ativo end,
         gravarAtivo = function(v) config.reconectar.ativo = v end
     })
-
 end
 
 function exportar()
@@ -420,6 +527,11 @@ function init()
     janela = g_ui.displayUI('helper')
     janela:hide()
 
+    pegadorMouse = g_ui.createWidget('UIWidget')
+    pegadorMouse:setVisible(false)
+    pegadorMouse:setFocusable(false)
+    pegadorMouse.onMouseRelease = aoSoltarMouse
+
     aplicar(g_settings.getNode('vethara_helper'))
     ligarTela()
     atualizarCabecalho()
@@ -446,6 +558,10 @@ function terminate()
     if tique then
         removeEvent(tique)
         tique = nil
+    end
+    if pegadorMouse then
+        pegadorMouse:destroy()
+        pegadorMouse = nil
     end
     if botaoTopo then
         botaoTopo:destroy()

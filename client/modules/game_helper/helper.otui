@@ -42,9 +42,10 @@ HelperLinhaMagia < Panel
     text-align: left
     !text: '%'
 
-# Linha com pocao escolhida numa lista.
-HelperLinhaPocao < Panel
-  height: 26
+# Linha com item escolhido da mochila. O slot aceita o item arrastado e o botao
+# abre o seletor por clique, que e o mesmo mecanismo das hotkeys do client.
+HelperLinhaItem < Panel
+  height: 36
 
   CheckBox
     id: ativo
@@ -52,19 +53,27 @@ HelperLinhaPocao < Panel
     anchors.verticalCenter: parent.verticalCenter
     width: 18
 
-  ComboBox
-    id: opcao
+  Item
+    id: item
     anchors.left: ativo.right
     anchors.verticalCenter: parent.verticalCenter
     margin-left: 6
-    width: 160
+    virtual: true
+
+  Button
+    id: escolher
+    anchors.left: item.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 64
+    !text: tr('Escolher')
 
   SpinBox
     id: porcento
-    anchors.left: opcao.right
+    anchors.left: escolher.right
     anchors.verticalCenter: parent.verticalCenter
     margin-left: 6
-    width: 58
+    width: 54
 
   Label
     id: sufixo
@@ -113,10 +122,10 @@ HelperLinhaTexto < Panel
 MainWindow
   id: helperWindow
   !text: tr('Assistente')
-  size: 780 276
+  size: 764 340
   @onEscape: modules.game_helper.toggle()
 
-  # ----- coluna da esquerda: quem sou eu e o que esta ligado -----
+  # ----- coluna da esquerda -----
   Label
     id: personagem
     anchors.top: parent.top
@@ -169,7 +178,7 @@ MainWindow
     anchors.left: parent.left
     width: 200
 
-  # ----- coluna do meio: cura por magia e treino de mana -----
+  # ----- coluna do meio: magias -----
   HelperTitulo
     id: tituloMagias
     anchors.top: parent.top
@@ -212,34 +221,56 @@ MainWindow
     width: 240
     margin-top: 2
 
-  # ----- coluna da direita: cura por pocao -----
+  # ----- coluna da direita: itens -----
   HelperTitulo
-    id: tituloPocoes
+    id: tituloItens
     anchors.top: parent.top
     anchors.left: tituloMagias.right
     margin-left: 16
     anchors.right: parent.right
-    !text: tr('Cura por pocao')
+    !text: tr('Cura por item (pocao ou runa)')
 
-  HelperLinhaPocao
-    id: pocao1
-    anchors.top: tituloPocoes.bottom
-    anchors.left: tituloPocoes.left
+  HelperLinhaItem
+    id: item1
+    anchors.top: tituloItens.bottom
+    anchors.left: tituloItens.left
     anchors.right: parent.right
     margin-top: 2
 
-  HelperLinhaPocao
-    id: pocao2
-    anchors.top: pocao1.bottom
-    anchors.left: tituloPocoes.left
+  HelperLinhaItem
+    id: item2
+    anchors.top: item1.bottom
+    anchors.left: tituloItens.left
     anchors.right: parent.right
 
-  HelperLinhaPocao
-    id: pocao3
-    anchors.top: pocao2.bottom
-    anchors.left: tituloPocoes.left
+  HelperLinhaItem
+    id: item3
+    anchors.top: item2.bottom
+    anchors.left: tituloItens.left
     anchors.right: parent.right
 
+  HelperTitulo
+    id: tituloRunas
+    anchors.top: item3.bottom
+    anchors.left: tituloItens.left
+    anchors.right: parent.right
+    margin-top: 12
+    !text: tr('Runa no alvo (vida do alvo ate)')
+
+  HelperLinhaItem
+    id: runa1
+    anchors.top: tituloRunas.bottom
+    anchors.left: tituloItens.left
+    anchors.right: parent.right
+    margin-top: 2
+
+  HelperLinhaItem
+    id: runa2
+    anchors.top: runa1.bottom
+    anchors.left: tituloItens.left
+    anchors.right: parent.right
+
+  # ----- rodape -----
   HelperInfo
     id: aviso
     anchors.left: parent.left
@@ -247,9 +278,8 @@ MainWindow
     anchors.bottom: separador.top
     margin-bottom: 6
     height: 16
-    !text: tr('Age no maximo uma vez por segundo, para nao esbarrar no limite de fala do servidor.')
+    !text: tr('Arraste o item para o quadro ou use Escolher. Clique com o botao direito no quadro para limpar.')
 
-  # ----- rodape -----
   HorizontalSeparator
     id: separador
     anchors.left: parent.left
