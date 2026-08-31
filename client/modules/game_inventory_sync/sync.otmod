@@ -1,0 +1,10 @@
+Module
+  name: game_inventory_sync
+  description: Mantem os slots de equipamento em dia com o estado real
+  author: Vethara
+  sandboxed: true
+  scripts: [ sync ]
+  autoload: true
+  dependencies: [ game_inventory ]
+  @onLoad: init()
+  @onUnload: terminate()
