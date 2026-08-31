@@ -304,6 +304,15 @@ MainWindow
     width: 80
     @onClick: modules.game_helper.importar()
 
+  HelperInfo
+    id: versao
+    anchors.right: fechar.left
+    anchors.bottom: parent.bottom
+    margin-right: 10
+    margin-bottom: 4
+    width: 120
+    text-align: right
+
   Button
     id: fechar
     !text: tr('Fechar')

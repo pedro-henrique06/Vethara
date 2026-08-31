@@ -26,6 +26,10 @@ local ESPERA_MAGIA = 1000 -- ms minimo entre falas, por causa do maxMessageBuffe
 local ESPERA_ITEM = 1000
 local ESPERA_COMIDA = 60000
 
+-- Aparece no rodape da janela. Serve para saber qual build o jogador tem quando
+-- ele reporta alguma coisa, e para conferir de relance se a atualizacao chegou.
+local VERSAO = '1.0'
+
 local ARQUIVO_EXPORTADO = '/assistente.json'
 
 local ultimaMagia = 0
@@ -532,6 +536,7 @@ function init()
     pegadorMouse:setFocusable(false)
     pegadorMouse.onMouseRelease = aoSoltarMouse
 
+    janela.versao:setText(tr('Assistente') .. ' ' .. VERSAO)
     aplicar(g_settings.getNode('vethara_helper'))
     ligarTela()
     atualizarCabecalho()
