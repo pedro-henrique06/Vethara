@@ -13,12 +13,18 @@ para este repositorio.
 
 ## Assistente
 
-Equivalente ao helper oficial do Rubinot: cura por magia, cura por pocao, treino
-de mana, auto haste, comer e reconectar. Abre pelo botao no menu superior.
+Equivalente ao helper oficial do Rubinot: cura por magia, cura por item, runa no
+alvo, treino de mana, auto haste, comer e reconectar. Abre pelo botao da barra do
+`game_mainpanel` — o mesmo que era do bot antigo.
 
-Nao e um bot de scripts — nao anda, nao ataca, nao coleta. So automatiza o que o
-jogador faria apertando teclas, e por isso e uma ferramenta do servidor e nao
-algo que ele precise coibir.
+Os itens sao escolhidos da mochila, e nao de uma lista: arraste para o quadro, ou
+use Escolher e aponte. Botao direito no quadro limpa. Assim qualquer item do
+servidor serve, inclusive item custom.
+
+Nao e um bot de scripts — nao anda, nao procura alvo, nao coleta. So automatiza o
+que o jogador faria apertando teclas, e a runa de ataque so dispara contra o alvo
+que ele mesmo escolheu. Por isso e uma ferramenta do servidor, e nao algo que ele
+precise coibir.
 
 ### Decisoes que valem registro
 
