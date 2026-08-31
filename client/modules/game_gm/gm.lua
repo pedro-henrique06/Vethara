@@ -153,7 +153,7 @@ local function liberar()
         return
     end
     botao = modules.game_mainpanel.addToggleButton('gmButton', tr('Menu de GM'),
-        '/images/topbuttons/debug', toggle, false, 99998)
+        '/images/options/button_control', toggle, false, 99998)
     botao:setOn(false)
     botao:show()
 end
