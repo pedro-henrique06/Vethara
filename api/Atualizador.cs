@@ -23,7 +23,9 @@ public static class Atualizador
     private static readonly HashSet<string> Ignorados = new(StringComparer.OrdinalIgnoreCase)
     {
         "README.md",
-        "build-vethara.bat"
+        "build-vethara.bat",
+        // Tem tratamento proprio: vai no campo binary, e nao na lista de arquivos.
+        "otclient.exe"
     };
 
     private static readonly SemaphoreSlim Trava = new(1, 1);
@@ -75,7 +77,20 @@ public static class Atualizador
             }
         }
 
-        return new Manifesto(urlBase.TrimEnd('/'), arquivos, KeepFiles: true, Binary: null);
+        // O client sabe trocar o proprio executavel: baixa, grava como
+        // otclient-<timestamp>.exe e reinicia nele (resourcemanager.cpp:1176). O
+        // checksum e comparado com g_resources.selfChecksum(), que e o CRC32 do
+        // exe em execucao — mesmo algoritmo e mesmo formato dos demais arquivos.
+        //
+        // O exe nao entra no git: sao 19 MB de binario que mudam a cada
+        // recompilacao. Ele e enviado por scp para a pasta servida, e se nao
+        // estiver la o manifesto simplesmente nao anuncia binario nenhum.
+        var exe = Path.Combine(raiz, "otclient.exe");
+        var binario = File.Exists(exe)
+            ? new Binario("/otclient.exe", Crc32(exe))
+            : null;
+
+        return new Manifesto(urlBase.TrimEnd('/'), arquivos, KeepFiles: true, binario);
     }
 
     public static async Task<Manifesto> ObterAsync(IConfiguration config)

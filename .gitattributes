@@ -1,0 +1,5 @@
+# Os arquivos que o updater distribui sao comparados por CRC32 byte a byte. Sem
+# isto o git entrega CRLF no Windows e LF no VPS: o mesmo arquivo teria hashes
+# diferentes nas duas pontas, e todo client baixaria tudo na primeira abertura —
+# com reinicio junto, porque init.lua esta na lista que forca reinicio.
+client/** -text

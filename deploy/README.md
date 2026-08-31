@@ -139,8 +139,10 @@ mais o `otclient.exe`, sem os assets da CipSoft, que o client baixa sozinho:
 ```bash
 cd client-modern
 git archive HEAD | tar -x -C /tmp/vethara-client
-cp otclient.exe init.lua /tmp/vethara-client/
-# o que e nosso, e por isso nao esta no git do otclient
+cp otclient.exe /tmp/vethara-client/
+# o que e nosso vem do repositorio, e nao do checkout do otclient: sao os mesmos
+# bytes que o updater vai anunciar, entao o client recem-instalado ja nasce em dia
+cp ../vethara-repo/client/init.lua /tmp/vethara-client/
 cp -r ../vethara-repo/client/modules/game_helper /tmp/vethara-client/modules/
 # o bot antigo (mods/game_bot) sai da lista de carga e nao vai no pacote:
 # quem faz o papel dele agora e o Assistente, no mesmo botao
