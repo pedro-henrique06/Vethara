@@ -9,6 +9,7 @@ para este repositorio.
 | `init.lua` | aponta o client para `https://vethara.com.br/login` |
 | `modules/game_helper/` | o Assistente |
 | `build-vethara.bat` | script de compilacao |
+| `mods/client_mods/mods.otmod` | lista de mods, sem o bot antigo |
 
 ## Assistente
 
@@ -41,6 +42,19 @@ cp -r client/modules/game_helper ../Vethara/client-modern/modules/
 ```
 
 O modulo tem `autoload: true`, entao carrega sozinho.
+
+## O bot antigo
+
+O `mods/game_bot` do OTClientV8 vinha junto e colocava um botao "Bot" na barra
+do `game_mainpanel`. Ele saiu da lista `load-later` do `mods/client_mods/mods.otmod`
+e nao vai no pacote.
+
+O Assistente assumiu o lugar dele: mesmo id de botao (`botButton`), mesmo icone
+(`/images/options/bot`) e mesmo indice na barra. Para o jogador, o botao continua
+onde estava — o que muda e o que ele abre.
+
+Para trazer o bot de volta, basta devolver `- game_bot` aquela lista: a pasta do
+mod continua intacta no checkout do otclient, so nao e distribuida.
 
 ## O travamento do fit-children
 

@@ -142,6 +142,10 @@ git archive HEAD | tar -x -C /tmp/vethara-client
 cp otclient.exe init.lua /tmp/vethara-client/
 # o que e nosso, e por isso nao esta no git do otclient
 cp -r ../vethara-repo/client/modules/game_helper /tmp/vethara-client/modules/
+# o bot antigo (mods/game_bot) sai da lista de carga e nao vai no pacote:
+# quem faz o papel dele agora e o Assistente, no mesmo botao
+cp ../vethara-repo/client/mods/client_mods/mods.otmod /tmp/vethara-client/mods/client_mods/
+rm -rf /tmp/vethara-client/mods/game_bot
 # os assets da CipSoft: estao no .gitignore do otclient, entao o git archive nao
 # os inclui. Sem os graficos o client abre e falha em catalog-content.json;
 # sem os sons ele roda mudo, so com um aviso no log.

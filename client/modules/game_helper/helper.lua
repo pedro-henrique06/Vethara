@@ -536,8 +536,13 @@ function init()
     ligarTela()
     atualizarCabecalho()
 
-    botaoTopo = modules.client_topmenu.addRightGameToggleButton('helperButton', tr('Assistente'),
-        '/images/topbuttons/bot', toggle)
+    -- Mesma barra e mesmo icone do bot antigo, que foi desligado no mods.otmod.
+    -- O ultimo argumento e o indice que o game_bot usava, para o botao cair no
+    -- mesmo lugar da barra.
+    botaoTopo = modules.game_mainpanel.addToggleButton('botButton', tr('Assistente'),
+        '/images/options/bot', toggle, false, 99999)
+    botaoTopo:setOn(false)
+    botaoTopo:show()
 
     connect(g_game, {
         onGameStart = onGameStart,
