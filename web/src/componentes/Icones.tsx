@@ -10,17 +10,20 @@ type Props = { tamanho?: number }
 
 const base = (t: number) => ({
   width: t, height: t, viewBox: '0 0 24 24',
-  fill: 'none', stroke: 'currentColor', strokeWidth: 1.6,
+  fill: 'none', stroke: 'currentColor', strokeWidth: 1.9,
   strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
   'aria-hidden': true,
 })
 
-/** Marca do site: um V dentro de um escudo. */
-export function Sigilo({ tamanho = 26 }: Props) {
+/** Marca do site: um V num escudo com chefe, no formato de brasao. */
+export function Sigilo({ tamanho = 30 }: Props) {
   return (
-    <svg {...base(tamanho)} strokeWidth={1.4}>
-      <path d="M12 2.5 20 5.5v6.2c0 4.4-3.2 8.3-8 9.8-4.8-1.5-8-5.4-8-9.8V5.5z" />
-      <path d="M8.6 8.4 12 15.6l3.4-7.2" strokeWidth={2} />
+    <svg {...base(tamanho)} strokeWidth={1.5}>
+      {/* Contorno do escudo: ombros retos e ponta em baixo. */}
+      <path d="M3.5 3h17v9.5c0 4.6-3.5 7.4-8.5 9.2-5-1.8-8.5-4.6-8.5-9.2z" fill="currentColor" fillOpacity={0.12} />
+      {/* Chefe: a faixa do alto, onde num brasao entra a divisa. */}
+      <path d="M3.5 7.2h17" strokeOpacity={0.55} />
+      <path d="M8.2 10.2 12 18.4l3.8-8.2" strokeWidth={2.2} />
     </svg>
   )
 }
@@ -46,6 +49,37 @@ export function Seta({ tamanho = 16 }: Props) {
   return (
     <svg {...base(tamanho)}>
       <path d="M5 12h13m-5-6 6 6-6 6" />
+    </svg>
+  )
+}
+
+/** Brasao de armas do Vethara: escudo entre espadas cruzadas, sob uma coroa.
+ *  Existe para ser marca d'agua — entra grande e quase apagado atras do heroi,
+ *  onde antes havia so gradiente. E o unico ornamento puramente decorativo do
+ *  site, entao carrega sozinho o peso de dizer "isto e um jogo". */
+export function BrasaoDeArmas({ tamanho = 320 }: Props) {
+  return (
+    <svg
+      width={tamanho} height={tamanho} viewBox="0 0 120 120"
+      fill="none" stroke="currentColor" strokeWidth={1.2}
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+    >
+      {/* Espadas cruzadas atras do escudo. */}
+      <g strokeWidth={1.6}>
+        <path d="M24 24 84 92" />
+        <path d="M18 30 26 20l6 6-8 10z" />
+        <path d="M80 88l8 8-4 4-8-8z" />
+        <path d="M96 24 36 92" />
+        <path d="M102 30 94 20l-6 6 8 10z" />
+        <path d="M40 88l-8 8 4 4 8-8z" />
+      </g>
+      {/* Escudo. */}
+      <path d="M60 14 96 26v34c0 20-15 32-36 40-21-8-36-20-36-40V26z" fill="currentColor" fillOpacity={0.06} strokeWidth={1.8} />
+      {/* Chefe e o V da marca. */}
+      <path d="M24 38h72" strokeOpacity={0.5} />
+      <path d="M44 50 60 84l16-34" strokeWidth={3.2} />
+      {/* Coroa de tres pontas sobre o escudo. */}
+      <path d="M44 12h32l-4-8-6 5-6-7-6 7-6-5z" strokeWidth={1.5} />
     </svg>
   )
 }

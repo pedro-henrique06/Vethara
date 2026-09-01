@@ -54,7 +54,7 @@ export default function Download() {
           <Link className="botao vazado" to="/criar-conta">Criar conta</Link>
         </div>
         {versao && (
-          <p style={{ color: 'var(--tinta-3)', fontSize: '0.88rem', marginTop: '1.25rem', marginBottom: 0 }}>
+          <p style={{ color: 'var(--pergaminho-3)', fontSize: '0.88rem', marginTop: '1.25rem', marginBottom: 0 }}>
             Versão <strong>{versao.versao}</strong>, publicada em{' '}
             {new Date(versao.publicado).toLocaleDateString('pt-BR')}.
           </p>
@@ -88,8 +88,8 @@ export default function Download() {
               <p className="guia" style={{ marginBottom: '0.5rem' }}>
                 Se quiser conferir que baixou exatamente o que publicamos, compare o SHA-256:
               </p>
-              <div className="rolagem" style={{ padding: '0.75rem', background: 'var(--fundo-2)' }}>
-                <code style={{ fontSize: '0.82rem', color: 'var(--tinta-2)' }}>{versao.sha256}</code>
+              <div className="rolagem" style={{ padding: '0.75rem', background: 'var(--pedra)' }}>
+                <code style={{ fontSize: '0.82rem', color: 'var(--pergaminho-2)' }}>{versao.sha256}</code>
               </div>
             </>
           ) : (

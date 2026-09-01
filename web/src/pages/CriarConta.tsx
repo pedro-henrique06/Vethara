@@ -30,7 +30,7 @@ export default function CriarConta() {
   if (pronto) {
     return (
       <div style={{ maxWidth: '30rem', margin: '2rem auto', textAlign: 'center' }}>
-        <div style={{ color: 'var(--realce)', marginBottom: '1.5rem' }}>
+        <div style={{ color: 'var(--ouro)', marginBottom: '1.5rem' }}>
           <Sigilo tamanho={48} />
         </div>
         <h1>Conta criada</h1>
@@ -49,7 +49,7 @@ export default function CriarConta() {
 
   return (
     <div style={{ maxWidth: '27rem', margin: '2rem auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.75rem', color: 'var(--realce)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem', color: 'var(--ouro)' }}>
         <Sigilo tamanho={40} />
       </div>
 

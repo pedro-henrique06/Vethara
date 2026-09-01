@@ -39,7 +39,7 @@ function Topo() {
       <div className="topo-interno">
         <Link to="/" className="marca">
           <Sigilo />
-          Vethara
+          <span className="nome">Vethara</span>
         </Link>
 
         <button
