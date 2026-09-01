@@ -267,7 +267,7 @@ function FichaMonstro({ monstro, detalhe }: { monstro: Monstro; detalhe: Detalhe
                   <div className="item-loot" key={l.item}>
                     <span className="nome-item">
                       {l.item}
-                      {l.maximo ? <span style={{ color: 'var(--tinta-3)' }}> ×{l.maximo}</span> : null}
+                      {l.maximo ? <span style={{ color: 'var(--pergaminho-3)' }}> ×{l.maximo}</span> : null}
                     </span>
                     <span className={`chance ${raridade(l.chance)}`}>{chanceEmPorcento(l.chance)}</span>
                   </div>

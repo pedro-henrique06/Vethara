@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type Noticia, type Posicao, type Status } from '../api'
-import { Vocacao } from '../componentes/Icones'
+import { BrasaoDeArmas, Vocacao } from '../componentes/Icones'
 import { Carregando, Erro } from '../componentes/Estados'
 
 // As taxas ficam aqui e na página do Mundo. A fonte é o servidor/Dockerfile —
@@ -31,6 +31,7 @@ export default function Home() {
   return (
     <>
       <section className="heroi">
+        <span className="marca-dagua" aria-hidden="true"><BrasaoDeArmas /></span>
         <span className="sobrancelha">Servidor brasileiro · Protocolo 15.25</span>
         <h1>O mundo global, com o ritmo certo</h1>
         <p className="guia">
@@ -93,7 +94,7 @@ export default function Home() {
           {noticias?.map(n => (
             <article className="painel" key={n.id}>
               <h3>{n.titulo}</h3>
-              <time dateTime={n.data} style={{ fontSize: '0.8rem', color: 'var(--tinta-3)' }}>
+              <time dateTime={n.data} style={{ fontSize: '0.8rem', color: 'var(--pergaminho-3)' }}>
                 {new Date(n.data).toLocaleDateString('pt-BR', {
                   day: '2-digit', month: 'long', year: 'numeric',
                 })}
@@ -120,7 +121,7 @@ export default function Home() {
                 <span style={{ minWidth: 0 }}>
                   <Link to={`/personagem/${encodeURIComponent(p.nome)}`}>{p.nome}</Link>
                   <br />
-                  <small style={{ color: 'var(--tinta-3)' }}>
+                  <small style={{ color: 'var(--pergaminho-3)' }}>
                     <Vocacao valor={p.vocacao} tamanho={12} />
                   </small>
                 </span>

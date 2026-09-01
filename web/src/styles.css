@@ -1,55 +1,72 @@
-/* Sistema visual do Vethara.
+/* Identidade do Vethara: pedra, ouro e sangue.
  *
- * Escuro, com uma cor de destaque so — verde-esmeralda — e o dourado reservado
- * para posicao e raridade. Nada de imagem: profundidade vem de camadas de fundo,
- * gradiente e borda, entao o site carrega inteiro sem esperar arte nenhuma.
+ * A versao anterior tinha cara de painel de empresa — verde-azulado de startup,
+ * cantos arredondados, sombra macia, sans-serif de sistema. Isto aqui e o
+ * oposto de proposito:
  *
- * Ordem do arquivo: fichas (tokens) -> base -> layout -> componentes -> paginas.
+ *   - Ouro velho e vermelho-sangue sobre pedra escura. Nenhum tom frio.
+ *   - Capitular romana (Cinzel) nos titulos, Garamond no corpo, gotica na marca.
+ *   - Canto vivo. O raio maximo e 2px, e so para nao serrar o olho.
+ *   - Moldura em vez de sombra: fio de ouro por dentro da borda escura, como
+ *     encadernacao. Profundidade vem de bisel e entalhe, nao de blur.
+ *   - Grao de pergaminho e vinheta, gerados em SVG dentro do proprio CSS.
+ *
+ * Continua sem baixar imagem nenhuma: textura e ornamento sao gradiente e SVG
+ * embutido; as fontes sao empacotadas com o site (ver main.tsx).
+ *
+ * Ordem do arquivo: fichas -> base -> layout -> componentes -> paginas.
  */
 
 /* ---------------------------------------------------------------- fichas -- */
 
 :root {
-  /* Quatro camadas de fundo, do mais fundo ao mais proximo. Ter uma escala em
-     vez de duas cores e o que deixa cartao dentro de cartao continuar legivel. */
-  --fundo: #0a0f0e;
-  --fundo-2: #0f1614;
-  --superficie: #141d1b;
-  --superficie-2: #1b2624;
-  --superficie-3: #22302d;
+  /* Pedra: do fundo da masmorra ate a face iluminada. Tudo puxa para o quente —
+     um cinza neutro aqui ja devolveria o ar corporativo. */
+  --pedra: #0b0908;
+  --pedra-2: #12100c;
+  --pedra-3: #1a1610;
+  --pedra-4: #241e16;
+  --pedra-5: #2f271c;
 
-  --tinta: #eaf2ef;
-  --tinta-2: #a8bab5;
-  --tinta-3: #7a8b86;
+  /* Tinta sobre pergaminho, nao branco sobre preto. */
+  --pergaminho: #ece1cb;
+  --pergaminho-2: #b6a889;
+  --pergaminho-3: #8a7c63;
 
-  --linha: #24322f;
-  --linha-forte: #33443f;
+  --linha: #33291c;
+  --linha-forte: #4d3d28;
 
-  --realce: #4fc0a6;
-  --realce-claro: #7fe0c8;
-  --realce-fundo: #12312a;
-  --ouro: #d9b978;
-  --ouro-fundo: #2e2513;
-  --perigo: #e0705f;
-  --perigo-fundo: #331915;
+  /* Ouro e a cor de acao e de valor. Aparece em botao, titulo de secao, posicao
+     no ranking e raridade de loot — em nada mais, senao deixa de significar. */
+  --ouro: #c9a44c;
+  --ouro-claro: #eccf8a;
+  --ouro-escuro: #8a6f2e;
+  --ouro-fundo: #2a2012;
 
-  /* Cor por vocacao. Aparece no brasao, no selo e na barra do ranking; ter
-     valor fixo por vocacao faz o jogador reconhecer a classe antes de ler. */
-  --voc-nenhuma: #8b9a95;
-  --voc-sorcerer: #a97be0;
-  --voc-druid: #62b5e8;
-  --voc-paladin: #7fd07a;
-  --voc-knight: #e2a15c;
+  /* Sangue: perigo, erro e chefe. */
+  --sangue: #a33a2c;
+  --sangue-claro: #d4705f;
+  --sangue-fundo: #2b120e;
 
-  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  /* Serifada nos titulos: da peso de "mundo antigo" sem baixar fonte nenhuma. */
-  --fonte-titulo: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --fonte-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  /* Vocacao. Cores quentes o suficiente para conviver com o ouro. */
+  --voc-nenhuma: #8a7c63;
+  --voc-sorcerer: #a382d6;
+  --voc-druid: #83ab5c;
+  --voc-paladin: #7fb0d8;
+  --voc-knight: #c2604a;
 
-  --raio: 10px;
-  --raio-p: 6px;
-  --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
-  --largura: 68rem;
+  --fonte: "EB Garamond", "Iowan Old Style", Georgia, serif;
+  --fonte-titulo: "Cinzel", "Trajan Pro", Georgia, serif;
+  --fonte-gotica: "UnifrakturMaguntia", "Cinzel", serif;
+  --fonte-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --raio: 2px;
+  --largura: 70rem;
+
+  /* Grao de pergaminho: ruido gerado por SVG, embutido como data-URI. Nao e
+     arquivo, nao vai a rede, e da a superficie a irregularidade que gradiente
+     puro nao tem. */
+  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
 /* ------------------------------------------------------------------ base -- */
@@ -64,66 +81,112 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--fundo);
-  color: var(--tinta);
+  color: var(--pergaminho);
   font-family: var(--fonte);
-  line-height: 1.6;
+  /* Garamond tem olho pequeno; 1.06rem nele equivale ao corpo de sempre. */
+  font-size: 1.06rem;
+  line-height: 1.65;
+  background: var(--pedra);
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 600; line-height: 1.15; }
-h1 { font-size: clamp(2.1rem, 1.3rem + 3.2vw, 3.1rem); margin: 0 0 0.6rem; letter-spacing: -0.01em; }
-h2 { font-size: clamp(1.35rem, 1.1rem + 1vw, 1.7rem); margin: 0 0 1rem; }
-h3 { font-size: 1.1rem; margin: 0 0 0.4rem; }
+/* Grao e vinheta na pagina inteira, presos ao viewport para nao rolar junto —
+   textura que rola vira papel de parede e denuncia o truque. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--grao);
+  opacity: 0.035;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, transparent 40%, rgb(0 0 0 / 0.55) 100%);
+}
+#root { position: relative; z-index: 1; }
+
+h1, h2, h3 {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--pergaminho);
+}
+h1 {
+  font-size: clamp(2rem, 1.2rem + 3vw, 2.9rem);
+  margin: 0 0 0.7rem;
+  letter-spacing: 0.03em;
+}
+h2 { font-size: clamp(1.3rem, 1.05rem + 1vw, 1.6rem); margin: 0 0 1rem; }
+h3 { font-size: 1.12rem; margin: 0 0 0.4rem; }
 
 p { margin: 0 0 1rem; }
-.guia { color: var(--tinta-2); max-width: 40rem; }
+.guia { color: var(--pergaminho-2); max-width: 42rem; }
 
-a { color: var(--realce); text-decoration: none; }
-a:hover { color: var(--realce-claro); text-decoration: underline; }
+a { color: var(--ouro); text-decoration: none; }
+a:hover { color: var(--ouro-claro); text-decoration: underline; text-underline-offset: 0.2em; }
 
-:focus-visible {
-  outline: 2px solid var(--realce);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
+:focus-visible { outline: 2px solid var(--ouro); outline-offset: 2px; }
 
-code { font-family: var(--fonte-mono); font-size: 0.9em; }
+code { font-family: var(--fonte-mono); font-size: 0.88em; }
 
 .num { font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- layout -- */
 
-.casca {
-  max-width: var(--largura);
-  margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
-}
+.casca { max-width: var(--largura); margin: 0 auto; padding: 2.5rem 1.25rem 3rem; }
 
 .secao { margin-bottom: 3.5rem; }
 
+/* Titulo de secao com filete: a regra dourada corre ate o fim da linha, como
+   cabecalho de capitulo. */
 .secao-topo {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--linha);
+  position: relative;
+}
+.secao-topo::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -1px;
+  width: 4rem; height: 1px;
+  background: var(--ouro);
 }
 .secao-topo h2 { margin: 0; }
-.secao-topo a { font-size: 0.9rem; }
+.secao-topo > a { margin-left: auto; font-size: 0.92rem; white-space: nowrap; }
 
 .grade { display: grid; gap: 1rem; }
 .grade.g2 { grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
 .grade.g3 { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
-.grade.g4 { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
 
-.colunas {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-}
+.colunas { display: grid; gap: 1.75rem; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 @media (max-width: 54rem) { .colunas { grid-template-columns: 1fr; } }
+
+/* Divisoria com losango no meio, no lugar de uma linha seca. */
+.divisoria {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 2.5rem 0;
+  color: var(--ouro-escuro);
+}
+.divisoria::before, .divisoria::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--linha-forte), transparent);
+}
 
 /* ------------------------------------------------------------------ topo -- */
 
@@ -131,15 +194,17 @@ code { font-family: var(--fonte-mono); font-size: 0.9em; }
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--fundo) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--linha);
+  background: linear-gradient(180deg, var(--pedra-3), var(--pedra-2));
+  border-bottom: 1px solid var(--linha-forte);
+  /* Fio de ouro sob a barra: e o detalhe que faz o topo parecer ferragem e nao
+     uma navbar. */
+  box-shadow: 0 1px 0 rgb(201 164 76 / 0.28), 0 6px 20px rgb(0 0 0 / 0.5);
 }
 
 .topo-interno {
   max-width: var(--largura);
   margin: 0 auto;
-  padding: 0.85rem 1.25rem;
+  padding: 0.7rem 1.25rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -148,299 +213,359 @@ code { font-family: var(--fonte-mono); font-size: 0.9em; }
 .marca {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-family: var(--fonte-titulo);
-  font-size: 1.3rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--tinta);
+  gap: 0.65rem;
   flex-shrink: 0;
+  color: var(--pergaminho);
 }
-.marca:hover { color: var(--realce); text-decoration: none; }
-.marca svg { color: var(--realce); }
+.marca:hover { text-decoration: none; }
+.marca svg { color: var(--ouro); }
+.marca .nome {
+  font-family: var(--fonte-gotica);
+  font-size: 1.75rem;
+  line-height: 1;
+  /* A gotica so aparece aqui. Ela e dificil de ler em texto corrido, mas numa
+     palavra so, grande, e o que diz "jogo" antes de qualquer outra coisa. */
+  background: linear-gradient(180deg, var(--ouro-claro), var(--ouro-escuro));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
-.menu { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.menu { display: flex; gap: 0.15rem; flex-wrap: wrap; }
 .menu a {
-  color: var(--tinta-2);
-  font-size: 0.92rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: var(--raio-p);
+  font-family: var(--fonte-titulo);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pergaminho-2);
+  padding: 0.5rem 0.7rem;
+  border-bottom: 2px solid transparent;
 }
-.menu a:hover { background: var(--superficie); color: var(--tinta); text-decoration: none; }
-.menu a.ativo { color: var(--realce); background: var(--realce-fundo); }
+.menu a:hover { color: var(--pergaminho); text-decoration: none; }
+.menu a.ativo { color: var(--ouro-claro); border-bottom-color: var(--ouro); }
 
 .pulso {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.85rem;
-  color: var(--tinta-2);
+  font-size: 0.9rem;
+  color: var(--pergaminho-2);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* Brasa em vez de bolinha de status: pulsa como tocha. */
 .ponto {
   width: 0.45rem; height: 0.45rem;
   border-radius: 50%;
-  background: var(--realce);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--realce) 70%, transparent);
-  animation: bater 2.4s ease-out infinite;
+  background: var(--ouro);
+  box-shadow: 0 0 6px var(--ouro);
+  animation: brasa 2.6s ease-in-out infinite;
 }
-@keyframes bater {
-  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--realce) 60%, transparent); }
-  70%  { box-shadow: 0 0 0 0.5rem transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
+@keyframes brasa {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--ouro); }
+  50% { opacity: 0.55; box-shadow: 0 0 2px var(--ouro); }
 }
 
-/* Menu em gaveta abaixo de 60rem: a barra tem 8 destinos e nao cabe. */
 .sanduiche {
   display: none;
   margin-left: auto;
-  background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio-p);
-  color: var(--tinta);
+  background: var(--pedra-4);
+  border: 1px solid var(--linha-forte);
+  color: var(--ouro);
   padding: 0.4rem 0.6rem;
   cursor: pointer;
-  font: inherit;
   line-height: 1;
 }
 
-@media (max-width: 60rem) {
+@media (max-width: 62rem) {
   .sanduiche { display: block; }
   .pulso { display: none; }
   .menu {
     display: none;
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
+    left: 0; right: 0;
     flex-direction: column;
     gap: 0;
-    background: var(--fundo-2);
-    border-bottom: 1px solid var(--linha);
-    padding: 0.5rem;
+    background: var(--pedra-2);
+    border-bottom: 1px solid var(--linha-forte);
+    padding: 0.25rem;
   }
   .menu.aberto { display: flex; }
-  .menu a { padding: 0.7rem; border-radius: 0; }
+  .menu a { padding: 0.8rem; border-bottom: 1px solid var(--linha); }
+  .menu a.ativo { border-bottom-color: var(--ouro); }
   .topo-interno { position: relative; }
 }
 
-/* ------------------------------------------------------------- componentes */
+/* ------------------------------------------------------------ componentes -- */
 
+/* Tabua de pedra: fundo escuro, borda dupla com fio de ouro por dentro. */
 .painel {
-  background: var(--superficie);
-  border: 1px solid var(--linha);
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--pedra-3), var(--pedra-2));
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.13);
   border-radius: var(--raio);
-  padding: 1.25rem;
+  padding: 1.4rem;
 }
 .painel + .painel { margin-top: 1rem; }
 .painel h2, .painel h3 { margin-top: 0; }
 
-/* Sobe um degrau de fundo e ganha um fio de luz no topo. Usado quando um painel
-   precisa se destacar de outros iguais ao lado. */
+/* Painel de destaque: mais claro, fio de ouro mais forte e cantoneiras. */
 .painel.alto {
-  background: linear-gradient(180deg, var(--superficie-2), var(--superficie));
-  border-color: var(--linha-forte);
-  box-shadow: var(--sombra);
+  background: linear-gradient(180deg, var(--pedra-4), var(--pedra-2));
+  border-color: var(--ouro-escuro);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.22), 0 10px 30px -18px #000;
 }
+/* Cantoneiras: dois cantos em L, desenhados so com borda. */
+.painel.alto::before, .painel.alto::after {
+  content: "";
+  position: absolute;
+  width: 0.85rem; height: 0.85rem;
+  border: 1px solid var(--ouro);
+  opacity: 0.65;
+  pointer-events: none;
+}
+.painel.alto::before { top: 4px; left: 4px; border-right: 0; border-bottom: 0; }
+.painel.alto::after { bottom: 4px; right: 4px; border-left: 0; border-top: 0; }
 
 .botao {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  background: var(--realce);
-  color: #05110e;
-  font: inherit;
-  font-weight: 650;
-  padding: 0.6rem 1.2rem;
-  border: 1px solid transparent;
-  border-radius: var(--raio-p);
+  gap: 0.5rem;
+  font-family: var(--fonte-titulo);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.3rem;
   cursor: pointer;
   white-space: nowrap;
+  border-radius: var(--raio);
+  /* Bisel: luz em cima, sombra embaixo, como metal batido. */
+  background: linear-gradient(180deg, var(--ouro-claro), var(--ouro) 45%, var(--ouro-escuro));
+  color: #1c1305;
+  border: 1px solid var(--ouro-escuro);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -2px 3px rgb(0 0 0 / 0.25);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.25);
 }
-.botao:hover { background: var(--realce-claro); color: #05110e; text-decoration: none; }
-.botao:disabled { opacity: 0.55; cursor: default; }
+.botao:hover {
+  background: linear-gradient(180deg, #f6e0aa, var(--ouro-claro) 45%, var(--ouro));
+  color: #1c1305;
+  text-decoration: none;
+}
+.botao:active { box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.35); }
+.botao:disabled { opacity: 0.5; cursor: default; }
+
 .botao.vazado {
   background: transparent;
-  color: var(--realce);
-  border-color: var(--linha-forte);
+  color: var(--ouro-claro);
+  border-color: var(--ouro-escuro);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.12);
+  text-shadow: none;
 }
-.botao.vazado:hover { background: var(--superficie-2); color: var(--realce-claro); }
+.botao.vazado:hover { background: var(--ouro-fundo); color: var(--ouro-claro); }
+
 .botao.discreto {
-  background: var(--superficie-2);
-  color: var(--tinta);
-  border-color: var(--linha);
+  background: linear-gradient(180deg, var(--pedra-5), var(--pedra-3));
+  color: var(--pergaminho);
+  border-color: var(--linha-forte);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  text-shadow: none;
 }
-.botao.discreto:hover { background: var(--superficie-3); color: var(--tinta); }
-.botao.p { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
+.botao.discreto:hover { background: var(--pedra-5); color: var(--pergaminho); }
+.botao.p { padding: 0.4rem 0.8rem; font-size: 0.72rem; }
 
-.acoes { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.acoes { display: flex; gap: 0.8rem; flex-wrap: wrap; }
 
+/* Selo: etiqueta chanfrada, nao pilula. O canto cortado e o que tira a cara de
+   tag de blog. */
 .selo {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  font-family: var(--fonte-titulo);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: var(--superficie-3);
-  color: var(--tinta-2);
+  padding: 0.25rem 0.6rem;
+  background: var(--pedra-4);
+  color: var(--pergaminho-2);
   border: 1px solid var(--linha-forte);
+  clip-path: polygon(0.35rem 0, 100% 0, 100% calc(100% - 0.35rem), calc(100% - 0.35rem) 100%, 0 100%, 0 0.35rem);
   white-space: nowrap;
 }
-.selo.destaque { background: var(--realce-fundo); color: var(--realce-claro); border-color: var(--realce-claro); }
-.selo.ouro { background: var(--ouro-fundo); color: var(--ouro); border-color: color-mix(in srgb, var(--ouro) 45%, transparent); }
-.selo.perigo { background: var(--perigo-fundo); color: var(--perigo); border-color: color-mix(in srgb, var(--perigo) 45%, transparent); }
-
+.selo.destaque { background: var(--ouro-fundo); color: var(--ouro-claro); border-color: var(--ouro-escuro); }
+.selo.ouro { background: var(--ouro-fundo); color: var(--ouro-claro); border-color: var(--ouro); }
+.selo.perigo { background: var(--sangue-fundo); color: var(--sangue-claro); border-color: var(--sangue); }
 .selos { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-/* Numeros grandes. Uma linha de rotulo pequeno em maiuscula e o valor abaixo. */
+/* Numeros: placas gravadas, separadas por filete de ouro fraco. */
 .numeros {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 1px;
-  background: var(--linha);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
-  overflow: hidden;
+  background: var(--linha-forte);
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.1);
 }
-.numero {
-  background: var(--superficie);
-  padding: 1rem 1.1rem;
-}
+.numero { background: linear-gradient(180deg, var(--pedra-3), var(--pedra-2)); padding: 1rem 1.1rem; }
 .numero dt {
-  font-size: 0.7rem;
+  font-family: var(--fonte-titulo);
+  font-size: 0.66rem;
   text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: var(--tinta-3);
+  letter-spacing: 0.14em;
+  color: var(--ouro-escuro);
 }
 .numero dd {
-  margin: 0.25rem 0 0;
+  margin: 0.3rem 0 0;
   font-family: var(--fonte-titulo);
-  font-size: 1.75rem;
+  font-size: 1.8rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  line-height: 1.05;
+  color: var(--pergaminho);
 }
-.numero dd small { font-size: 0.85rem; color: var(--tinta-3); font-family: var(--fonte); }
+.numero dd small { font-size: 0.8rem; color: var(--pergaminho-3); font-family: var(--fonte); }
 
-/* Barra de proporcao: usada em habilidade, elemento e chance de loot. */
 .barra {
-  height: 0.4rem;
-  background: var(--superficie-3);
-  border-radius: 999px;
+  height: 0.45rem;
+  background: var(--pedra);
+  border: 1px solid var(--linha-forte);
   overflow: hidden;
 }
 .barra > i {
   display: block;
   height: 100%;
-  background: var(--realce);
-  border-radius: 999px;
+  background: linear-gradient(180deg, var(--ouro-claro), var(--ouro-escuro));
 }
-.barra.ouro > i { background: var(--ouro); }
-.barra.perigo > i { background: var(--perigo); }
+.barra.perigo > i { background: linear-gradient(180deg, var(--sangue-claro), var(--sangue)); }
 
 .linha-barra {
   display: grid;
-  grid-template-columns: 7rem 1fr 3.5rem;
+  grid-template-columns: 7.5rem 1fr 3.5rem;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.3rem 0;
-  font-size: 0.9rem;
+  padding: 0.32rem 0;
+  font-size: 0.95rem;
 }
-.linha-barra span:first-child { color: var(--tinta-2); }
+.linha-barra span:first-child { color: var(--pergaminho-2); }
 .linha-barra span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- tabela -- */
 
-.rolagem { overflow-x: auto; border-radius: var(--raio); border: 1px solid var(--linha); }
+.rolagem {
+  overflow-x: auto;
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.1);
+}
 
-table { width: 100%; border-collapse: collapse; font-size: 0.94rem; background: var(--superficie); }
-th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--linha); }
+table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; }
 thead th {
   position: sticky;
   top: 0;
-  background: var(--superficie-2);
-  font-size: 0.7rem;
+  background: linear-gradient(180deg, var(--pedra-4), var(--pedra-3));
+  font-family: var(--fonte-titulo);
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--tinta-3);
-  font-weight: 650;
+  letter-spacing: 0.12em;
+  color: var(--ouro);
+  font-weight: 600;
   white-space: nowrap;
+  border-bottom: 1px solid var(--ouro-escuro);
 }
-tbody tr:last-child td { border-bottom: 0; }
-tbody tr:hover { background: var(--superficie-2); }
+/* Zebra em vez de borda por linha: livro-razao, nao planilha. */
+tbody tr { background: var(--pedra-2); }
+tbody tr:nth-child(even) { background: var(--pedra-3); }
+tbody tr:hover { background: var(--ouro-fundo); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.posto { color: var(--tinta-3); font-weight: 700; font-variant-numeric: tabular-nums; }
+.posto { color: var(--pergaminho-3); font-weight: 600; font-variant-numeric: tabular-nums; }
 .posto.medalha { color: var(--ouro); }
 
 /* --------------------------------------------------------------- estados -- */
 
 .aviso {
   padding: 0.9rem 1.1rem;
-  border: 1px solid var(--linha);
-  border-left: 3px solid var(--realce);
-  background: var(--superficie);
-  color: var(--tinta-2);
-  border-radius: var(--raio-p);
+  background: var(--pedra-3);
+  border: 1px solid var(--linha-forte);
+  border-left: 3px solid var(--ouro);
+  color: var(--pergaminho-2);
 }
-.aviso.erro { border-left-color: var(--perigo); color: var(--tinta); }
+.aviso.erro { border-left-color: var(--sangue); background: var(--sangue-fundo); color: var(--pergaminho); }
 
 .vazio {
   text-align: center;
   padding: 3rem 1.5rem;
-  border: 1px dashed var(--linha-forte);
-  border-radius: var(--raio);
-  color: var(--tinta-3);
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.08);
+  background: var(--pedra-2);
+  color: var(--pergaminho-3);
 }
-.vazio strong { display: block; color: var(--tinta-2); font-size: 1.05rem; margin-bottom: 0.35rem; }
+.vazio strong {
+  display: block;
+  font-family: var(--fonte-titulo);
+  color: var(--pergaminho-2);
+  font-size: 1.15rem;
+  margin-bottom: 0.4rem;
+}
 
-/* Esqueleto no lugar de "Carregando…": a pagina nao pula quando os dados
-   chegam, porque o espaco ja estava reservado. */
 .esqueleto {
-  background: linear-gradient(90deg, var(--superficie) 25%, var(--superficie-2) 37%, var(--superficie) 63%);
+  background: linear-gradient(90deg, var(--pedra-2) 25%, var(--pedra-4) 37%, var(--pedra-2) 63%);
   background-size: 400% 100%;
-  animation: brilho 1.4s ease-in-out infinite;
-  border-radius: var(--raio-p);
+  animation: brilho 1.5s ease-in-out infinite;
+  border: 1px solid var(--linha);
   height: 1rem;
 }
 @keyframes brilho { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 
-.paginacao { display: flex; gap: 0.7rem; align-items: center; margin-top: 1.25rem; }
-.paginacao span { color: var(--tinta-3); font-size: 0.9rem; }
+.paginacao { display: flex; gap: 0.8rem; align-items: center; margin-top: 1.25rem; }
+.paginacao span { color: var(--pergaminho-3); font-size: 0.92rem; }
 
 /* ------------------------------------------------------------ formulario -- */
 
 .formulario { display: flex; flex-direction: column; gap: 1.1rem; }
 .formulario label { display: flex; flex-direction: column; gap: 0.35rem; }
-.formulario label > span { font-size: 0.88rem; color: var(--tinta-2); font-weight: 550; }
+.formulario label > span {
+  font-family: var(--fonte-titulo);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ouro);
+}
 
 input[type="text"], input[type="email"], input[type="password"], input[type="search"], select {
-  background: var(--fundo-2);
+  /* Campo entalhado: fundo mais fundo que o painel e sombra interna no topo. */
+  background: var(--pedra);
   border: 1px solid var(--linha-forte);
-  border-radius: var(--raio-p);
-  color: var(--tinta);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.5);
+  color: var(--pergaminho);
   padding: 0.6rem 0.75rem;
   font: inherit;
+  font-size: 1rem;
   width: 100%;
+  border-radius: var(--raio);
 }
-input:hover, select:hover { border-color: var(--tinta-3); }
-input::placeholder { color: var(--tinta-3); }
-.formulario small { color: var(--tinta-3); font-size: 0.82rem; }
-.formulario button { align-self: flex-start; }
-.formulario button.largo { align-self: stretch; justify-content: center; }
+input:hover, select:hover { border-color: var(--ouro-escuro); }
+input:focus-visible, select:focus-visible { border-color: var(--ouro); }
+input::placeholder { color: var(--pergaminho-3); }
+.formulario small { color: var(--pergaminho-3); font-size: 0.88rem; }
 
 fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-legend { font-size: 0.88rem; color: var(--tinta-2); padding: 0; }
+legend {
+  font-family: var(--fonte-titulo);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ouro);
+  padding: 0;
+}
 
 .opcoes { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-/* Radio como cartao: alvo grande no celular e estado visivel sem depender da
-   bolinha do sistema, que fica quase invisivel no escuro. */
 .formulario label.opcao, .opcao {
   flex-direction: row;
   flex: 1;
@@ -450,42 +575,43 @@ legend { font-size: 0.88rem; color: var(--tinta-2); padding: 0; }
   gap: 0.5rem;
   padding: 0.55rem 0.8rem;
   border: 1px solid var(--linha-forte);
-  border-radius: var(--raio-p);
-  background: var(--fundo-2);
+  background: var(--pedra);
   cursor: pointer;
 }
-.opcao:hover { border-color: var(--tinta-3); }
-.opcao input { accent-color: var(--realce); width: auto; }
-.opcao:has(input:checked) { border-color: var(--realce); background: var(--realce-fundo); }
+.opcao:hover { border-color: var(--ouro-escuro); }
+.opcao input { accent-color: var(--ouro); width: auto; }
+.opcao:has(input:checked) { border-color: var(--ouro); background: var(--ouro-fundo); }
+.opcao span { color: var(--pergaminho); font-family: var(--fonte); text-transform: none; letter-spacing: 0; font-size: 1rem; }
+
+.formulario button { align-self: flex-start; }
+.formulario button.largo { align-self: stretch; justify-content: center; }
 
 .busca { position: relative; }
-.busca input { padding-left: 2.2rem; }
-.busca svg { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--tinta-3); }
+.busca input { padding-left: 2.3rem; }
+.busca svg { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--ouro-escuro); }
 
-.filtros {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 1.25rem;
-}
+.filtros { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem; }
 .filtros .busca { flex: 1; min-width: 12rem; }
 .filtros select { width: auto; }
 
-/* Pilulas de filtro, para quando as opcoes sao poucas e cabem na linha. */
 .pilulas { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .pilula {
-  background: var(--superficie);
-  border: 1px solid var(--linha);
-  color: var(--tinta-2);
-  border-radius: 999px;
-  padding: 0.3rem 0.8rem;
-  font: inherit;
-  font-size: 0.85rem;
+  font-family: var(--fonte-titulo);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  background: var(--pedra-3);
+  border: 1px solid var(--linha-forte);
+  color: var(--pergaminho-2);
+  padding: 0.4rem 0.9rem;
   cursor: pointer;
 }
-.pilula:hover { border-color: var(--linha-forte); color: var(--tinta); }
-.pilula[aria-pressed="true"] { background: var(--realce-fundo); border-color: var(--realce); color: var(--realce-claro); }
+.pilula:hover { border-color: var(--ouro-escuro); color: var(--pergaminho); }
+.pilula[aria-pressed="true"] {
+  background: var(--ouro-fundo);
+  border-color: var(--ouro);
+  color: var(--ouro-claro);
+}
 
 /* --------------------------------------------------------------- vocacao -- */
 
@@ -496,210 +622,234 @@ legend { font-size: 0.88rem; color: var(--tinta-2); padding: 0; }
 .voc-druid { color: var(--voc-druid); }
 .voc-paladin { color: var(--voc-paladin); }
 .voc-knight { color: var(--voc-knight); }
-/* O nome fica na cor do texto normal; so o brasao usa a cor da vocacao, senao a
-   tabela inteira vira arco-iris e nada se destaca. */
-.voc .nome-voc { color: var(--tinta-2); }
+.voc .nome-voc { color: var(--pergaminho-2); }
 
 /* ----------------------------------------------------------------- heroi -- */
 
 .heroi {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
+  padding: clamp(2.2rem, 1rem + 4vw, 3.8rem);
+  margin-bottom: 3rem;
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.18), 0 14px 40px -24px #000;
   background:
-    radial-gradient(60rem 20rem at 15% -20%, color-mix(in srgb, var(--realce) 16%, transparent), transparent),
-    radial-gradient(40rem 18rem at 100% 0%, color-mix(in srgb, var(--voc-sorcerer) 10%, transparent), transparent),
-    linear-gradient(180deg, var(--superficie-2), var(--fundo-2));
-  padding: clamp(2rem, 1rem + 4vw, 3.5rem);
-  margin-bottom: 2.5rem;
+    radial-gradient(70% 100% at 20% 0%, rgb(201 164 76 / 0.13), transparent 60%),
+    radial-gradient(60% 90% at 95% 20%, rgb(163 58 44 / 0.16), transparent 60%),
+    linear-gradient(180deg, var(--pedra-4), var(--pedra));
 }
-/* Trama de linhas diagonais bem fraca: tira o "chapado" do gradiente sem
-   pesar nada, porque e gradiente repetido e nao imagem. */
-.heroi::after {
+/* Grao proprio, mais forte que o da pagina: o heroi e a superficie mais
+   "material" do site. */
+.heroi::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 9px);
+  background: var(--grao);
+  opacity: 0.06;
   pointer-events: none;
 }
 .heroi > * { position: relative; z-index: 1; }
-.heroi h1 { max-width: 18ch; }
-.heroi .guia { font-size: 1.08rem; margin-bottom: 1.75rem; }
 
+/* Marca d'agua: o brasao grande, quase apagado, sangrando pela direita. Fica
+   atras do texto (z-index 0) e some no celular, onde competiria com ele. */
+.heroi .marca-dagua {
+  position: absolute;
+  z-index: 0;
+  right: -3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ouro);
+  opacity: 0.09;
+  line-height: 0;
+  pointer-events: none;
+}
+@media (max-width: 52rem) { .heroi .marca-dagua { display: none; } }
+.heroi h1 { max-width: 17ch; }
+.heroi .guia { font-size: 1.15rem; margin-bottom: 1.9rem; }
+
+/* Sobrancelha com filete de cada lado, como legenda de gravura. */
 .sobrancelha {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  gap: 0.7rem;
+  font-family: var(--fonte-titulo);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--realce);
-  margin-bottom: 0.9rem;
+  color: var(--ouro);
+  margin-bottom: 1rem;
+}
+.sobrancelha::before {
+  content: "";
+  width: 2rem; height: 1px;
+  background: var(--ouro-escuro);
 }
 
 /* ---------------------------------------------------------------- podio --- */
 
-.podio {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-@media (max-width: 40rem) { .podio { grid-template-columns: 1fr; } }
+.podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+@media (max-width: 42rem) { .podio { grid-template-columns: 1fr; } }
 
+/* Cada degrau e um escudo: a base afunila em ponta. */
 .degrau {
-  background: linear-gradient(180deg, var(--superficie-2), var(--superficie));
-  border: 1px solid var(--linha-forte);
-  border-radius: var(--raio);
-  padding: 1.25rem;
-  text-align: center;
   position: relative;
+  text-align: center;
+  padding: 1.4rem 1rem 2.2rem;
+  background: linear-gradient(180deg, var(--pedra-4), var(--pedra-2));
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.12);
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
 }
-/* O primeiro lugar sobe um pouco e ganha a borda dourada — a hierarquia se le
-   antes de qualquer numero. */
-.degrau.primeiro { border-color: color-mix(in srgb, var(--ouro) 50%, transparent); }
-@media (min-width: 40rem) { .degrau.primeiro { transform: translateY(-0.75rem); } }
-.degrau .coroa { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-3); }
+.degrau.primeiro {
+  border-color: var(--ouro);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.35), 0 0 30px -10px rgb(201 164 76 / 0.4);
+  background: linear-gradient(180deg, #322717, var(--pedra-2));
+}
+@media (min-width: 42rem) { .degrau.primeiro { transform: translateY(-0.9rem); } }
+.degrau .coroa {
+  font-family: var(--fonte-titulo);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pergaminho-3);
+}
 .degrau.primeiro .coroa { color: var(--ouro); }
-.degrau .nome { font-family: var(--fonte-titulo); font-size: 1.25rem; margin: 0.3rem 0; }
-.degrau .nome a { color: var(--tinta); }
-.degrau .exp { font-size: 0.85rem; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.degrau .nome { font-family: var(--fonte-titulo); font-size: 1.2rem; margin: 0.4rem 0; }
+.degrau .nome a { color: var(--pergaminho); }
+.degrau .exp { font-size: 0.88rem; color: var(--pergaminho-3); font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------ personagem -- */
 
-/* Cartao de personagem: usado no painel da conta. */
 .personagem {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
+  background: linear-gradient(180deg, var(--pedra-3), var(--pedra-2));
+  border: 1px solid var(--linha-forte);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.08);
   padding: 1rem;
 }
-.personagem, .personagem:hover { color: var(--tinta); text-decoration: none; }
-.personagem:hover { border-color: var(--realce); background: var(--superficie-2); }
+.personagem, .personagem:hover { color: var(--pergaminho); text-decoration: none; }
+.personagem:hover { border-color: var(--ouro-escuro); background: linear-gradient(180deg, var(--pedra-4), var(--pedra-3)); }
+/* Brasao: escudo chanfrado com o simbolo da vocacao dentro. */
 .personagem .brasao {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.9rem; height: 2.9rem;
   display: grid;
   place-items: center;
-  border-radius: var(--raio-p);
-  background: var(--fundo-2);
+  background: var(--pedra);
   border: 1px solid var(--linha-forte);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
   flex-shrink: 0;
 }
 .personagem .dados { min-width: 0; }
-.personagem .dados strong { display: block; font-size: 1.05rem; }
-.personagem .dados small { color: var(--tinta-3); }
-.personagem .nivel {
-  margin-left: auto;
-  text-align: right;
+.personagem .dados strong { display: block; font-family: var(--fonte-titulo); font-size: 1.05rem; }
+.personagem .dados small { color: var(--pergaminho-3); }
+.personagem .nivel { margin-left: auto; text-align: right; flex-shrink: 0; }
+.personagem .nivel b {
+  font-family: var(--fonte-titulo);
+  font-size: 1.5rem;
+  display: block;
+  line-height: 1;
+  color: var(--ouro);
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
 }
-.personagem .nivel b { font-family: var(--fonte-titulo); font-size: 1.4rem; display: block; line-height: 1; }
-.personagem .nivel small { color: var(--tinta-3); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.personagem .nivel small {
+  color: var(--pergaminho-3);
+  font-family: var(--fonte-titulo);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
 
-/* Faixa do topo da ficha do personagem. */
-.ficha-topo {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-}
+.ficha-topo { display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
 .ficha-topo .brasao-grande {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 5rem; height: 5rem;
   display: grid;
   place-items: center;
-  border-radius: var(--raio);
-  background: var(--superficie);
-  border: 1px solid var(--linha-forte);
+  background: linear-gradient(180deg, var(--pedra-4), var(--pedra));
+  border: 1px solid var(--ouro-escuro);
+  box-shadow: inset 0 0 0 1px rgb(201 164 76 / 0.2);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
   flex-shrink: 0;
 }
 .ficha-topo h1 { margin: 0; }
 
 /* --------------------------------------------------------------- monstro -- */
 
-.monstros {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
-  gap: 0.75rem;
-}
+.monstros { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 0.75rem; }
 
 .monstro {
   text-align: left;
-  background: var(--superficie);
+  background: linear-gradient(180deg, var(--pedra-3), var(--pedra-2));
   border: 1px solid var(--linha);
-  border-radius: var(--raio);
   padding: 0.85rem 1rem;
   cursor: pointer;
   font: inherit;
-  color: var(--tinta);
+  color: var(--pergaminho);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
-.monstro:hover { border-color: var(--realce); background: var(--superficie-2); }
-.monstro[aria-pressed="true"] { border-color: var(--realce); background: var(--realce-fundo); }
-.monstro .titulo { font-weight: 600; }
-.monstro .medidas { display: flex; gap: 0.9rem; font-size: 0.82rem; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.monstro:hover { border-color: var(--ouro-escuro); background: linear-gradient(180deg, var(--pedra-4), var(--pedra-3)); }
+.monstro[aria-pressed="true"] {
+  border-color: var(--ouro);
+  background: linear-gradient(180deg, #2b2214, var(--pedra-3));
+}
+.monstro .titulo { font-family: var(--fonte-titulo); font-weight: 600; font-size: 0.98rem; }
+.monstro .medidas { display: flex; gap: 0.9rem; font-size: 0.85rem; color: var(--pergaminho-3); font-variant-numeric: tabular-nums; }
 
-.estrelas { color: var(--ouro); font-size: 0.8rem; letter-spacing: 0.1em; }
+.estrelas { color: var(--ouro); letter-spacing: 0.1em; }
 
-/* A ficha do monstro gruda no topo enquanto a lista rola ao lado. */
 .ficha-monstro { position: sticky; top: 5rem; }
 
-.loot { display: flex; flex-direction: column; gap: 0.15rem; max-height: 22rem; overflow-y: auto; }
+.loot { display: flex; flex-direction: column; max-height: 22rem; overflow-y: auto; }
 .item-loot {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
   align-items: center;
-  padding: 0.3rem 0;
-  font-size: 0.88rem;
+  padding: 0.32rem 0;
+  font-size: 0.95rem;
   border-bottom: 1px solid var(--linha);
 }
 .item-loot:last-child { border-bottom: 0; }
 .item-loot .nome-item::first-letter { text-transform: uppercase; }
-.item-loot .chance { color: var(--tinta-3); font-variant-numeric: tabular-nums; font-size: 0.8rem; }
-.item-loot .chance.comum { color: var(--tinta-2); }
+.item-loot .chance { color: var(--pergaminho-3); font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+.item-loot .chance.comum { color: var(--pergaminho-2); }
 .item-loot .chance.raro { color: var(--ouro); }
 
 /* ---------------------------------------------------------------- rodape -- */
 
 .rodape {
-  border-top: 1px solid var(--linha);
-  background: var(--fundo-2);
-  margin-top: 2.5rem;
+  border-top: 1px solid var(--linha-forte);
+  box-shadow: inset 0 1px 0 rgb(201 164 76 / 0.15);
+  background: var(--pedra-2);
+  margin-top: 1.5rem;
 }
 .rodape-interno {
   max-width: var(--largura);
   margin: 0 auto;
   padding: 2.5rem 1.25rem;
   display: grid;
-  gap: 1.5rem;
+  gap: 1.75rem;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  color: var(--tinta-3);
-  font-size: 0.9rem;
+  color: var(--pergaminho-3);
+  font-size: 0.95rem;
 }
 .rodape h3 {
-  font-family: var(--fonte);
-  font-size: 0.72rem;
+  font-family: var(--fonte-titulo);
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: var(--tinta-3);
-  margin-bottom: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--ouro);
+  margin-bottom: 0.7rem;
 }
-.rodape ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
-.rodape a { color: var(--tinta-2); }
-.rodape a:hover { color: var(--realce); }
+.rodape ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.rodape a { color: var(--pergaminho-2); }
+.rodape a:hover { color: var(--ouro-claro); }
 .rodape .fim {
   grid-column: 1 / -1;
   border-top: 1px solid var(--linha);
   padding-top: 1.25rem;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
 }

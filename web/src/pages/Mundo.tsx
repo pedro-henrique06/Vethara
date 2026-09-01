@@ -88,8 +88,8 @@ export default function Mundo() {
             </p>
             <p style={{
               fontFamily: 'var(--fonte-mono)', fontSize: '0.9rem',
-              background: 'var(--fundo-2)', padding: '0.9rem', borderRadius: 'var(--raio-p)',
-              color: 'var(--tinta-2)', overflowX: 'auto',
+              background: 'var(--pedra)', padding: '0.9rem', borderRadius: 'var(--raio)',
+              color: 'var(--pergaminho-2)', overflowX: 'auto',
             }}>
               experiência × (1 + bônus de nível) × stamina × 50
             </p>
@@ -109,7 +109,7 @@ export default function Mundo() {
                 {PORTAS.map(([porta, uso]) => (
                   <tr key={porta}>
                     <td className="num" style={{ whiteSpace: 'nowrap' }}>{porta}</td>
-                    <td style={{ color: 'var(--tinta-2)' }}>{uso}</td>
+                    <td style={{ color: 'var(--pergaminho-2)' }}>{uso}</td>
                   </tr>
                 ))}
               </tbody>

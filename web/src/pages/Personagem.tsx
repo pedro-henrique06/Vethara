@@ -122,7 +122,7 @@ export default function Personagem() {
                           ? <Link to={`/personagem/${encodeURIComponent(m.por)}`}>{m.por}</Link>
                           : m.por}
                         {m.maiorDano && (
-                          <small style={{ color: 'var(--tinta-3)' }}> (maior dano: {m.maiorDano})</small>
+                          <small style={{ color: 'var(--pergaminho-3)' }}> (maior dano: {m.maiorDano})</small>
                         )}
                       </td>
                     </tr>

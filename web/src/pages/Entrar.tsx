@@ -31,7 +31,7 @@ export default function Entrar() {
     // Coluna estreita e centrada: numa tela de login não há nada para comparar
     // ao lado, e a linha inteira da página deixaria os campos gigantes.
     <div style={{ maxWidth: '25rem', margin: '2rem auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.75rem', color: 'var(--realce)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem', color: 'var(--ouro)' }}>
         <Sigilo tamanho={40} />
       </div>
 
