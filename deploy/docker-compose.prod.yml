@@ -18,6 +18,22 @@ services:
   server:
     build: ../servidor
     image: vethara-canary:local
+    volumes:
+      # O mapa passa a morar no host. A imagem do Canary nao traz o .otbm: o
+      # start.sh dela baixa o arquivo quando nao o encontra, e ele fica na
+      # camada gravavel do container — que todo deploy que mexe no servidor
+      # descarta. Eram 176 MB baixados de novo, sempre a mesma release, com o
+      # servidor fora do ar enquanto isso.
+      #
+      # Montado o arquivo, o start.sh encontra o mapa no lugar e pula o
+      # download. So leitura: o Canary le o .otbm no boot e nunca escreve nele.
+      #
+      # deploy/baixar-mapa.sh e quem poe o arquivo aqui, e roda no subir.sh
+      # antes do `up` — bind mount de arquivo inexistente vira diretorio.
+      #
+      # Como o mount aponta para o inode, trocar de mapa e substituir o arquivo
+      # E recriar o container; sem recriar, ele continua lendo o inode antigo.
+      - '../mapa/otservbr.otbm:/canary/data-otservbr-global/world/otservbr.otbm:ro'
     # Sem este limite, o Canary crescendo demais leva o host inteiro junto: site,
     # banco e SSH param de responder e nem `docker ps` roda, porque o kernel passa
     # a gastar tudo tentando liberar memoria. Foi o que aconteceu em 31/08.

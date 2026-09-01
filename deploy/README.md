@@ -60,7 +60,7 @@ Para ambiente local, sem jogadores, dá para ignorar os avisos:
 bash deploy/subir.sh --forcar
 ```
 
-Acompanhe a primeira subida — ela baixa o mapa:
+Acompanhe a primeira subida — a do host baixa o mapa antes de subir:
 
 ```bash
 docker compose -f docker/docker-compose.yml logs -f server
@@ -187,9 +187,31 @@ Sobre a velocidade: a final e `basespeed + (level - 1)`, entao dobrar a base da
 +110 em qualquer nivel — o dobro exato no level 1, cerca de 1,5x no level 100.
 Dobrar em todos os niveis exigiria script Lua recalculando a cada level up.
 
-**Cada deploy que muda o servidor recria o container, e o mapa e baixado de
-novo** (~200 MB): ele vive na camada gravavel do container, nao no volume. A
-primeira subida depois de mexer nas taxas leva alguns minutos.
+## O mapa fica no host
+
+A imagem do Canary nao traz o `.otbm`. O `start.sh` dela baixa o arquivo quando
+nao o encontra, e ele fica na **camada gravavel do container** — que todo deploy
+que mexe no servidor descarta. Eram 176 MB baixados de novo a cada vez, sempre a
+mesma release, com o servidor fora do ar enquanto isso.
+
+Agora o arquivo mora em `mapa/otservbr.otbm`, no host, e o compose de producao o
+monta em `/canary/data-otservbr-global/world/otservbr.otbm` so para leitura. O
+`start.sh` encontra o mapa no lugar e nao baixa nada; recriar o container deixa
+de custar download.
+
+Quem poe o arquivo la e o `deploy/baixar-mapa.sh`, chamado pelo `subir.sh`
+**antes** do `docker compose up` — bind mount de arquivo que nao existe faz o
+Docker criar um diretorio no lugar, e o servidor subiria sem mapa. O script e
+idempotente: com o mapa presente e integro, nao faz nada.
+
+Ele confere o que baixou antes de instalar: tamanho minimo e o `0xFE` que abre o
+no raiz do formato OTBM. Um 404 que volte como pagina HTML com codigo 200 nao
+chega a substituir o mapa bom.
+
+Para trocar de mapa, mude o `CANARY_MAP_URL` no `docker/.env`, apague
+`mapa/otservbr.otbm` e rode o deploy. **O container precisa ser recriado**: o
+bind mount aponta para o inode, entao substituir o arquivo com o container de pe
+nao muda o que ele esta lendo — a mesma armadilha do Caddyfile.
 
 ## Site: React + API .NET
 

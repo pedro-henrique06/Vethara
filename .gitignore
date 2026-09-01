@@ -35,6 +35,9 @@ logs/
 # Pacote do client servido pelo VPS — grande e reconstruivel
 /download/
 
+# Mapa baixado pelo deploy/baixar-mapa.sh — 176 MB, vem de uma release
+/mapa/
+
 # Site
 node_modules/
 dist/
