@@ -106,6 +106,37 @@ Em produção os dois viram containers e o Caddy roteia por caminho — mesma or
 O MyAAC continua no ar em `/aac`, cuidando de criação de conta e do painel administrativo
 até a API assumir essas partes.
 
+### Páginas
+
+| Rota | O que mostra |
+| --- | --- |
+| `/` | Hero, números do mundo, taxas, notícias e topo do ranking |
+| `/mundo` | Taxas, como a experiência é calculada, portas |
+| `/monstros` | As 1.363 criaturas do datapack, com busca, filtros, loot e resistências |
+| `/highscores` | Ranking com pódio e filtro por vocação |
+| `/online` | Quem está online, com contagem por vocação e busca |
+| `/personagem/:nome` | Ficha pública: habilidades, guilda e últimas mortes |
+| `/minha-conta` | Painel do jogador: personagens, criação e troca de senha |
+| `/download` | Client, passos de instalação e SHA-256 |
+
+Nome de personagem é clicável em toda parte — ranking, online e painel levam à mesma ficha.
+
+### Dados das criaturas
+
+`/monstros` não consulta o banco: os dados vêm do datapack do Canary, extraídos uma vez
+para dois arquivos versionados em `web/public/`. A API não teria como servi-los — o
+datapack vive dentro da imagem do servidor, não no container da API.
+
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/opentibiabr/canary.git
+cd canary && git sparse-checkout set --cone data-otservbr-global/monster && git checkout
+cd .. && node dev/gerar-monstros.mjs ./canary
+```
+
+São dois arquivos de propósito: `monstros.json` é o índice que a lista usa (24 kB
+comprimidos) e `monstros-detalhes.json` traz loot e locais (157 kB), baixado só quando
+alguém abre a primeira ficha.
+
 ---
 
 ## Deploy
@@ -125,6 +156,9 @@ Testam o servidor no nível de protocolo, sem abrir client gráfico. Úteis para
 node dev/login-test.js god god      # autentica e lista personagens
 node dev/enter-world.js god "Nome"  # entra no mundo e lê a descrição do mapa
 ```
+
+`dev/gerar-monstros.mjs` extrai o bestiário do datapack do Canary para os JSON que a
+página de criaturas lê — uso descrito na seção do site.
 
 Foram escritos para o protocolo **8.60** (RSA cru + XTEA). Não servem para o mundo 15.25, que usa
 login por HTTP — nesse caso o teste equivalente é:

@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api, type MinhaConta as Conta } from '../api'
 import { sessao } from '../sessao'
-
-const VOCACOES = [
-  'Sem vocação', 'Sorcerer', 'Druid', 'Paladin', 'Knight',
-  'Master Sorcerer', 'Elder Druid', 'Royal Paladin', 'Elite Knight'
-]
+import { Brasao, Seta } from '../componentes/Icones'
+import { baseDaVocacao, nomeDaVocacao } from '../vocacoes'
+import { Carregando, Erro } from '../componentes/Estados'
 
 export default function MinhaConta() {
   const [conta, setConta] = useState<Conta | null>(null)
@@ -17,6 +15,7 @@ export default function MinhaConta() {
   const [nome, setNome] = useState('')
   const [sexo, setSexo] = useState(1)
   const [erroPersonagem, setErroPersonagem] = useState<string | null>(null)
+  const [criando, setCriando] = useState(false)
 
   // formulário de senha
   const [atual, setAtual] = useState('')
@@ -44,12 +43,15 @@ export default function MinhaConta() {
   async function criarPersonagem(e: React.FormEvent) {
     e.preventDefault()
     setErroPersonagem(null)
+    setCriando(true)
     try {
       await api.criarPersonagem(nome, sexo)
       setNome('')
       await carregar()
     } catch (e) {
       setErroPersonagem(e instanceof Error ? e.message : 'Não foi possível criar.')
+    } finally {
+      setCriando(false)
     }
   }
 
@@ -72,102 +74,141 @@ export default function MinhaConta() {
   }
 
   if (!conta) {
-    return <div className="aviso">{erro ?? 'Carregando…'}</div>
+    return erro ? <Erro>{erro}</Erro> : <Carregando linhas={4} altura="4rem" />
   }
+
+  const maiorLevel = conta.personagens.reduce((m, p) => Math.max(m, p.level), 0)
 
   return (
     <>
-      <section className="secao">
-        <div className="cabecalho-conta">
-          <div>
-            <h1>Minha conta</h1>
-            <p style={{ color: 'var(--ink-2)' }}>{conta.email}</p>
-          </div>
-          <button className="botao vazado" onClick={sair}>Sair</button>
+      <section className="ficha-topo">
+        <div>
+          <h1>Minha conta</h1>
+          <p className="guia" style={{ margin: 0 }}>{conta.email}</p>
         </div>
+        <button className="botao vazado p" style={{ marginLeft: 'auto' }} onClick={sair}>
+          Sair
+        </button>
       </section>
 
+      <dl className="numeros" style={{ marginBottom: '2.5rem' }}>
+        <div className="numero">
+          <dt>Personagens</dt>
+          <dd>{conta.personagens.length}</dd>
+        </div>
+        <div className="numero">
+          <dt>Maior level</dt>
+          <dd>{maiorLevel || '—'}</dd>
+        </div>
+        <div className="numero">
+          <dt>Mundo</dt>
+          <dd style={{ fontSize: '1.2rem' }}>Vethara</dd>
+        </div>
+      </dl>
+
       <section className="secao">
-        <h2>Personagens</h2>
+        <div className="secao-topo">
+          <h2>Personagens</h2>
+          {conta.personagens.length > 0 && <Link to="/download">Baixar o client →</Link>}
+        </div>
+
         {conta.personagens.length === 0 ? (
-          <div className="aviso">Você ainda não tem personagens.</div>
+          <div className="vazio">
+            <strong>Nenhum personagem ainda</strong>
+            Crie o primeiro abaixo — ele nasce em Rookgaard e entra no mundo na hora.
+          </div>
         ) : (
-          <div className="rolagem">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome</th><th>Vocação</th>
-                  <th className="num">Level</th><th>Último login</th>
-                </tr>
-              </thead>
-              <tbody>
-                {conta.personagens.map(p => (
-                  <tr key={p.nome}>
-                    <td>{p.nome}</td>
-                    <td>{VOCACOES[p.vocacao] ?? `Vocação ${p.vocacao}`}</td>
-                    <td className="num">{p.level}</td>
-                    <td>
-                      {p.ultimoLogin
-                        ? new Date(p.ultimoLogin).toLocaleDateString('pt-BR')
-                        : 'nunca entrou'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grade g2">
+            {conta.personagens.map(p => (
+              <Link
+                className="personagem"
+                key={p.nome}
+                to={`/personagem/${encodeURIComponent(p.nome)}`}
+              >
+                <span className={`brasao voc-${baseDaVocacao(p.vocacao)}`}>
+                  <Brasao vocacao={p.vocacao} tamanho={22} />
+                </span>
+                <span className="dados">
+                  <strong>{p.nome}</strong>
+                  <small>
+                    {nomeDaVocacao(p.vocacao)}
+                    {' · '}
+                    {p.ultimoLogin
+                      ? `entrou em ${new Date(p.ultimoLogin).toLocaleDateString('pt-BR')}`
+                      : 'nunca entrou'}
+                  </small>
+                </span>
+                <span className="nivel">
+                  <b>{p.level}</b>
+                  <small>level</small>
+                </span>
+              </Link>
+            ))}
           </div>
         )}
       </section>
 
-      <section className="secao">
-        <h2>Criar personagem</h2>
-        <form className="formulario" onSubmit={criarPersonagem}>
-          <label>
-            <span>Nome</span>
-            <input type="text" value={nome} required minLength={3} maxLength={20}
-                   onChange={e => setNome(e.target.value)} />
-            <small>Apenas letras e espaços. Não pode ser mudado depois.</small>
-          </label>
-          <fieldset>
-            <legend>Sexo</legend>
-            <div className="opcoes">
-              <label className="radio">
-                <input type="radio" name="sexoNovo" checked={sexo === 1}
-                       onChange={() => setSexo(1)} />
-                <span>Masculino</span>
+      <div className="colunas">
+        <section className="secao">
+          <div className="secao-topo"><h2>Criar personagem</h2></div>
+          <div className="painel">
+            <form className="formulario" onSubmit={criarPersonagem}>
+              <label>
+                <span>Nome</span>
+                <input
+                  type="text" value={nome} required minLength={3} maxLength={20}
+                  onChange={e => setNome(e.target.value)}
+                  placeholder="Ex.: Arwen Solaris"
+                />
+                <small>Apenas letras e espaços. Não pode ser mudado depois.</small>
               </label>
-              <label className="radio">
-                <input type="radio" name="sexoNovo" checked={sexo === 0}
-                       onChange={() => setSexo(0)} />
-                <span>Feminino</span>
-              </label>
-            </div>
-          </fieldset>
-          {erroPersonagem && <div className="aviso erro">{erroPersonagem}</div>}
-          <button className="botao" type="submit">Criar personagem</button>
-        </form>
-      </section>
+              <fieldset>
+                <legend>Sexo</legend>
+                <div className="opcoes">
+                  <label className="opcao">
+                    <input type="radio" name="sexoNovo" checked={sexo === 1} onChange={() => setSexo(1)} />
+                    <span>Masculino</span>
+                  </label>
+                  <label className="opcao">
+                    <input type="radio" name="sexoNovo" checked={sexo === 0} onChange={() => setSexo(0)} />
+                    <span>Feminino</span>
+                  </label>
+                </div>
+              </fieldset>
+              {erroPersonagem && <Erro>{erroPersonagem}</Erro>}
+              <button className="botao" type="submit" disabled={criando}>
+                {criando ? 'Criando…' : 'Criar personagem'} <Seta />
+              </button>
+            </form>
+          </div>
+        </section>
 
-      <section className="secao">
-        <h2>Trocar senha</h2>
-        <form className="formulario" onSubmit={trocarSenha}>
-          <label>
-            <span>Senha atual</span>
-            <input type="password" value={atual} required autoComplete="current-password"
-                   onChange={e => setAtual(e.target.value)} />
-          </label>
-          <label>
-            <span>Nova senha</span>
-            <input type="password" value={nova} required minLength={8}
-                   autoComplete="new-password"
-                   onChange={e => setNova(e.target.value)} />
-            <small>Ao menos 8 caracteres. Vale também para entrar no jogo.</small>
-          </label>
-          {erroSenha && <div className="aviso erro">{erroSenha}</div>}
-          {avisoSenha && <div className="aviso">{avisoSenha}</div>}
-          <button className="botao" type="submit">Trocar senha</button>
-        </form>
-      </section>
+        <aside className="secao">
+          <div className="secao-topo"><h2>Trocar senha</h2></div>
+          <div className="painel">
+            <form className="formulario" onSubmit={trocarSenha}>
+              <label>
+                <span>Senha atual</span>
+                <input
+                  type="password" value={atual} required autoComplete="current-password"
+                  onChange={e => setAtual(e.target.value)}
+                />
+              </label>
+              <label>
+                <span>Nova senha</span>
+                <input
+                  type="password" value={nova} required minLength={8} autoComplete="new-password"
+                  onChange={e => setNova(e.target.value)}
+                />
+                <small>Ao menos 8 caracteres. Vale também para entrar no jogo.</small>
+              </label>
+              {erroSenha && <Erro>{erroSenha}</Erro>}
+              {avisoSenha && <div className="aviso">{avisoSenha}</div>}
+              <button className="botao discreto" type="submit">Trocar senha</button>
+            </form>
+          </div>
+        </aside>
+      </div>
     </>
   )
 }

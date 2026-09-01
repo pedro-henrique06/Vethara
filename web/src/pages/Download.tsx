@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const ARQUIVO = '/download/vethara-client.zip'
 
@@ -28,46 +29,77 @@ function useVersao() {
   return versao
 }
 
+const PASSOS = [
+  ['Baixe o pacote', 'Um zip só, com os arquivos gráficos já dentro. Não há download extra depois da primeira abertura.'],
+  ['Descompacte a pasta inteira', 'Rodar o executável de dentro do zip não funciona: ele precisa dos arquivos ao lado.'],
+  ['Execute otclient.exe', 'Crie sua conta pelo site e entre com o mesmo e-mail e senha.'],
+]
+
 export default function Download() {
   const versao = useVersao()
   const megabytes = versao ? Math.round(versao.tamanho / 1048576) : null
 
   return (
-    <section className="secao">
-      <h1>Baixar o client</h1>
-      <p style={{ color: 'var(--ink-2)', maxWidth: '34rem' }}>
-        Descompacte a pasta inteira e execute <code>otclient.exe</code>. O pacote já
-        vem completo, com os arquivos gráficos do jogo — não há nada para baixar
-        depois.
-      </p>
-
-      <div className="acoes" style={{ margin: '1.5rem 0' }}>
-        <a className="botao" href={ARQUIVO}>
-          Baixar{megabytes ? ` (${megabytes} MB)` : ''}
-        </a>
-      </div>
-
-      {versao && (
-        <p style={{ color: 'var(--ink-2)', fontSize: '0.9rem' }}>
-          Versão <strong>{versao.versao}</strong>, publicada em{' '}
-          {new Date(versao.publicado).toLocaleDateString('pt-BR')}.
+    <>
+      <section className="heroi">
+        <span className="sobrancelha">Client oficial do Vethara</span>
+        <h1>Baixar e jogar</h1>
+        <p className="guia">
+          Um fork do OTClient, já configurado para o nosso servidor. Windows 64 bits.
         </p>
-      )}
-
-      <div className="aviso">
-        <strong>O Windows vai avisar que o arquivo é desconhecido.</strong> Isso
-        acontece porque o client não tem assinatura digital paga, não porque haja
-        algo nele.
+        <div className="acoes">
+          <a className="botao" href={ARQUIVO}>
+            Baixar{megabytes ? ` · ${megabytes} MB` : ''}
+          </a>
+          <Link className="botao vazado" to="/criar-conta">Criar conta</Link>
+        </div>
         {versao && (
-          <>
-            {' '}Se quiser conferir que baixou exatamente o que publicamos, compare
-            o SHA-256:
-            <div className="rolagem" style={{ marginTop: '0.75rem' }}>
-              <code style={{ fontSize: '0.85rem' }}>{versao.sha256}</code>
-            </div>
-          </>
+          <p style={{ color: 'var(--tinta-3)', fontSize: '0.88rem', marginTop: '1.25rem', marginBottom: 0 }}>
+            Versão <strong>{versao.versao}</strong>, publicada em{' '}
+            {new Date(versao.publicado).toLocaleDateString('pt-BR')}.
+          </p>
         )}
-      </div>
-    </section>
+      </section>
+
+      <section className="secao">
+        <div className="secao-topo"><h2>Como instalar</h2></div>
+        <div className="grade g3">
+          {PASSOS.map(([titulo, texto], i) => (
+            <article className="painel" key={titulo}>
+              <div className="selo destaque" style={{ marginBottom: '0.6rem' }}>Passo {i + 1}</div>
+              <h3>{titulo}</h3>
+              <p className="guia" style={{ margin: 0, fontSize: '0.92rem' }}>{texto}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="secao">
+        <div className="secao-topo"><h2>O aviso do Windows</h2></div>
+        <div className="painel">
+          <p className="guia">
+            O Windows vai dizer que o arquivo é de origem desconhecida. Isso acontece
+            porque o client não tem assinatura digital paga — não porque haja algo nele.
+            Clique em <strong>Mais informações</strong> e depois em{' '}
+            <strong>Executar assim mesmo</strong>.
+          </p>
+          {versao ? (
+            <>
+              <p className="guia" style={{ marginBottom: '0.5rem' }}>
+                Se quiser conferir que baixou exatamente o que publicamos, compare o SHA-256:
+              </p>
+              <div className="rolagem" style={{ padding: '0.75rem', background: 'var(--fundo-2)' }}>
+                <code style={{ fontSize: '0.82rem', color: 'var(--tinta-2)' }}>{versao.sha256}</code>
+              </div>
+            </>
+          ) : (
+            <p className="guia" style={{ margin: 0 }}>
+              Assim que houver uma versão publicada, o SHA-256 do arquivo aparece aqui
+              para conferência.
+            </p>
+          )}
+        </div>
+      </section>
+    </>
   )
 }

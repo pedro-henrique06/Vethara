@@ -57,6 +57,38 @@ async function enviar<T>(caminho: string, corpo: unknown): Promise<T> {
   return dados as T
 }
 
+export type Morte = {
+  data: string
+  level: number
+  por: string
+  porJogador: boolean
+  maiorDano: string | null
+}
+
+export type Ficha = {
+  nome: string
+  level: number
+  vocacao: string
+  sexo: string
+  experiencia: number
+  online: boolean
+  ultimoLogin: string | null
+  horasJogadas: number
+  guilda: string | null
+  cargo: string | null
+  habilidades: {
+    magia: number
+    punho: number
+    clava: number
+    espada: number
+    machado: number
+    distancia: number
+    escudo: number
+    pesca: number
+  }
+  mortes: Morte[]
+}
+
 export type Personagem = {
   nome: string
   level: number
@@ -96,7 +128,13 @@ export const api = {
     autenticado<{ mensagem: string }>('/minha-conta/senha', 'POST', { senhaAtual, senhaNova }),
   criarConta: (c: NovaConta) => enviar<{ mensagem: string }>('/contas', c),
   status: () => buscar<Status>('/status'),
+  // encodeURIComponent porque nome de personagem tem espaco, e sem isso a barra
+  // de um nome mal formado viraria outro segmento de rota.
+  personagem: (nome: string) => buscar<Ficha>(`/personagens/${encodeURIComponent(nome)}`),
   online: () => buscar<Jogador[]>('/online'),
-  highscores: (pagina = 1) => buscar<Posicao[]>(`/highscores?pagina=${pagina}`),
+  // vocacao null e "todas": a API trata o parametro ausente assim, entao ele so
+  // entra na URL quando ha filtro.
+  highscores: (pagina = 1, vocacao: number | null = null) =>
+    buscar<Posicao[]>(`/highscores?pagina=${pagina}${vocacao ? `&vocacao=${vocacao}` : ''}`),
   noticias: (limite = 5) => buscar<Noticia[]>(`/noticias?limite=${limite}`)
 }
