@@ -76,6 +76,13 @@ if [[ -n "$(valor VETHARA_DOMAIN)" ]]; then
 	ARQUIVOS+=(-f "$RAIZ/deploy/docker-compose.prod.yml")
 	USA_CADDY=1
 	verde "Dominio $(valor VETHARA_DOMAIN) -- subindo com Caddy e HTTPS."
+
+	# O compose de producao monta o mapa do host dentro do container, e um bind
+	# mount de arquivo que nao existe faz o Docker criar um DIRETORIO no lugar.
+	# O servidor subiria sem mapa por causa disso, entao o download vem antes do
+	# `up`. Depois da primeira vez, isto nao faz nada.
+	echo
+	bash "$RAIZ/deploy/baixar-mapa.sh"
 else
 	amarelo "Sem VETHARA_DOMAIN -- subindo sem Caddy. O site e o login ficam em HTTP."
 fi
