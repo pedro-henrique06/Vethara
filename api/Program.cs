@@ -159,6 +159,105 @@ app.MapGet("/api/highscores", async (DbFactory db, int pagina = 1, int tamanho =
     return Results.Ok(lista);
 });
 
+// Ficha publica de um personagem. E o destino de todo nome clicavel do site —
+// ranking, lista de online, painel da conta —, entao vale a pena ser a unica
+// consulta que junta tudo: dados, guilda, presenca e mortes.
+app.MapGet("/api/personagens/{nome}", async (DbFactory db, string nome) =>
+{
+    // O nome vem da URL e vai para a consulta como parametro, nunca concatenado.
+    // O LIMIT 1 e por seguranca: o schema tem UNIQUE em name, mas um servidor
+    // antigo migrado pode nao ter.
+    await using var c = await db.OpenAsync();
+
+    await using var cmd = c.CreateCommand();
+    cmd.CommandText = """
+        SELECT p.id, p.name, p.level, p.vocation, p.sex, p.experience, p.maglevel,
+               p.lastlogin, p.onlinetime, p.town_id, p.skull,
+               p.skill_fist, p.skill_club, p.skill_sword, p.skill_axe,
+               p.skill_dist, p.skill_shielding, p.skill_fishing,
+               (SELECT COUNT(*) FROM players_online o WHERE o.player_id = p.id) AS online,
+               g.name AS guilda, gm.nick AS cargo
+        FROM players p
+        LEFT JOIN guild_membership gm ON gm.player_id = p.id
+        LEFT JOIN guilds g            ON g.id = gm.guild_id
+        WHERE p.name = @nome AND p.deletion = 0
+        LIMIT 1
+        """;
+    cmd.Parameters.AddWithValue("@nome", nome);
+
+    await using var r = await cmd.ExecuteReaderAsync();
+    if (!await r.ReadAsync())
+    {
+        return Results.NotFound(new { erro = $"Não existe personagem chamado \"{nome}\"." });
+    }
+
+    var id = r.GetInt32("id");
+    var ficha = new
+    {
+        nome = r.GetString("name"),
+        level = r.GetInt32("level"),
+        vocacao = Vocacao(r.GetInt32("vocation")),
+        sexo = r.GetInt32("sex") == 1 ? "Masculino" : "Feminino",
+        experiencia = r.GetInt64("experience"),
+        online = r.GetInt64("online") > 0,
+        // lastlogin e unix timestamp; zero quer dizer "nunca entrou", e nao 1970.
+        ultimoLogin = r.GetInt64("lastlogin") > 0
+            ? DateTimeOffset.FromUnixTimeSeconds(r.GetInt64("lastlogin")).UtcDateTime
+            : (DateTime?)null,
+        horasJogadas = r.GetInt64("onlinetime") / 3600,
+        guilda = r.IsDBNull(r.GetOrdinal("guilda")) ? null : r.GetString("guilda"),
+        cargo = r.IsDBNull(r.GetOrdinal("cargo")) ? null : r.GetString("cargo"),
+        habilidades = new
+        {
+            magia = r.GetInt32("maglevel"),
+            punho = r.GetInt32("skill_fist"),
+            clava = r.GetInt32("skill_club"),
+            espada = r.GetInt32("skill_sword"),
+            machado = r.GetInt32("skill_axe"),
+            distancia = r.GetInt32("skill_dist"),
+            escudo = r.GetInt32("skill_shielding"),
+            pesca = r.GetInt32("skill_fishing")
+        }
+    };
+    await r.CloseAsync();
+
+    // As mortes vem em consulta separada porque sao varias linhas para o mesmo
+    // personagem: junto na consulta acima, cada morte repetiria a ficha inteira.
+    await using var cmdMortes = c.CreateCommand();
+    cmdMortes.CommandText = """
+        SELECT time, level, killed_by, is_player, mostdamage_by
+        FROM player_deaths
+        WHERE player_id = @id
+        ORDER BY time DESC
+        LIMIT 10
+        """;
+    cmdMortes.Parameters.AddWithValue("@id", id);
+
+    var mortes = new List<object>();
+    await using var rm = await cmdMortes.ExecuteReaderAsync();
+    while (await rm.ReadAsync())
+    {
+        var por = rm.GetString("killed_by");
+        var maiorDano = rm.GetString("mostdamage_by");
+        mortes.Add(new
+        {
+            // player_deaths.time e em milissegundos, ao contrario dos outros
+            // timestamps do schema.
+            data = DateTimeOffset.FromUnixTimeMilliseconds(rm.GetInt64("time")).UtcDateTime,
+            level = rm.GetInt32("level"),
+            por,
+            porJogador = rm.GetBoolean("is_player"),
+            // So vale mostrar quem deu mais dano quando nao foi quem matou.
+            maiorDano = maiorDano != por && maiorDano.Length > 0 ? maiorDano : null
+        });
+    }
+
+    return Results.Ok(new { ficha.nome, ficha.level, ficha.vocacao, ficha.sexo,
+                            ficha.experiencia, ficha.online, ficha.ultimoLogin,
+                            ficha.horasJogadas, ficha.guilda, ficha.cargo,
+                            ficha.habilidades, mortes });
+});
+
 app.MapGet("/api/noticias", async (DbFactory db, int limite = 5) =>
 {
     limite = Math.Clamp(limite, 1, 20);

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../api'
 import { sessao } from '../sessao'
+import { Sigilo } from '../componentes/Icones'
+import { Erro } from '../componentes/Estados'
 
 export default function Entrar() {
   const [email, setEmail] = useState('')
@@ -26,35 +28,48 @@ export default function Entrar() {
   }
 
   return (
-    <section className="secao">
-      <h1>Entrar</h1>
-      <p style={{ color: 'var(--ink-2)', marginBottom: '1.5rem' }}>
-        Use o mesmo e-mail e senha do jogo.
-      </p>
+    // Coluna estreita e centrada: numa tela de login não há nada para comparar
+    // ao lado, e a linha inteira da página deixaria os campos gigantes.
+    <div style={{ maxWidth: '25rem', margin: '2rem auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem', color: 'var(--realce)' }}>
+        <Sigilo tamanho={40} />
+      </div>
 
-      <form className="formulario" onSubmit={enviar}>
-        <label>
-          <span>E-mail</span>
-          <input type="email" value={email} required autoComplete="email"
-                 onChange={e => setEmail(e.target.value)} />
-        </label>
+      <div className="painel alto">
+        <h1 style={{ fontSize: '1.7rem', textAlign: 'center' }}>Entrar</h1>
+        <p className="guia" style={{ textAlign: 'center', fontSize: '0.92rem' }}>
+          Use o mesmo e-mail e senha do jogo.
+        </p>
 
-        <label>
-          <span>Senha</span>
-          <input type="password" value={senha} required autoComplete="current-password"
-                 onChange={e => setSenha(e.target.value)} />
-        </label>
+        <form className="formulario" onSubmit={enviar} style={{ marginTop: '1.5rem' }}>
+          <label>
+            <span>E-mail</span>
+            <input
+              type="email" value={email} required autoComplete="email" autoFocus
+              placeholder="voce@exemplo.com"
+              onChange={e => setEmail(e.target.value)}
+            />
+          </label>
 
-        {erro && <div className="aviso erro">{erro}</div>}
+          <label>
+            <span>Senha</span>
+            <input
+              type="password" value={senha} required autoComplete="current-password"
+              onChange={e => setSenha(e.target.value)}
+            />
+          </label>
 
-        <button className="botao" type="submit" disabled={enviando}>
-          {enviando ? 'Entrando…' : 'Entrar'}
-        </button>
-      </form>
+          {erro && <Erro>{erro}</Erro>}
 
-      <p style={{ marginTop: '1.5rem', color: 'var(--ink-2)' }}>
+          <button className="botao largo" type="submit" disabled={enviando}>
+            {enviando ? 'Entrando…' : 'Entrar'}
+          </button>
+        </form>
+      </div>
+
+      <p className="guia" style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.92rem' }}>
         Ainda não tem conta? <Link to="/criar-conta">Criar agora</Link>.
       </p>
-    </section>
+    </div>
   )
 }
