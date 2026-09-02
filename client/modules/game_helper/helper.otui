@@ -34,7 +34,7 @@ HelperLinhaMagia < Panel
     margin-left: 6
     width: 120
 
-  SpinBox
+  TextEdit
     id: porcento
     anchors.left: valor.right
     anchors.verticalCenter: parent.verticalCenter
@@ -76,7 +76,7 @@ HelperLinhaItem < Panel
     width: 64
     !text: tr('Escolher')
 
-  SpinBox
+  TextEdit
     id: porcento
     anchors.left: escolher.right
     anchors.verticalCenter: parent.verticalCenter
@@ -111,6 +111,39 @@ HelperLinhaSimples < Panel
     text-align: left
 
 # Linha com texto livre, sem porcentagem.
+# Liga-desliga com um numero ao lado.
+HelperLinhaNumero < Panel
+  height: 26
+
+  CheckBox
+    id: ativo
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: 18
+
+  Label
+    id: rotulo
+    anchors.left: ativo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 150
+    text-align: left
+
+  TextEdit
+    id: porcento
+    anchors.left: rotulo.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 6
+    width: 54
+
+  Label
+    id: sufixo
+    anchors.left: porcento.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 4
+    width: 60
+    text-align: left
+
 HelperLinhaTexto < Panel
   height: 26
 
@@ -346,6 +379,12 @@ MainWindow
       width: 300
       margin-top: 2
 
+    HelperLinhaNumero
+      id: autoAlvo
+      anchors.top: pouparJogadores.bottom
+      anchors.left: parent.left
+      width: 300
+
     # ----- coluna da direita: runas no alvo -----
     HelperTitulo
       id: tituloRunas
@@ -374,14 +413,14 @@ MainWindow
       anchors.left: tituloRunas.left
       anchors.right: parent.right
       margin-top: 10
-      !text: tr('O assistente nunca escolhe alvo.')
+      !text: tr('Sem alvo automatico, o assistente nunca escolhe alvo.')
 
     HelperInfo
       id: explicacao2
       anchors.top: explicacao1.bottom
       anchors.left: tituloRunas.left
       anchors.right: parent.right
-      !text: tr('Magia e runa so disparam contra quem voce ja ataca.')
+      !text: tr('Magia e runa so disparam contra o alvo atual, e nunca contra jogador.')
 
   # ----- rodape, comum as duas abas -----
   HelperInfo

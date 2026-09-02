@@ -104,7 +104,10 @@ local function criar()
     if not escolhido then
         return
     end
-    local qtd = janela.quantidade:getValue() or 1
+    -- Campo de texto e nao SpinBox: o SpinBox reescreve o valor a cada tecla
+    -- e impede digitar o numero inteiro.
+    local qtd = math.floor(tonumber(janela.quantidade:getText()) or 1)
+    qtd = math.max(1, math.min(10000, qtd))
     -- Enviado pelo nome, e nao pelo id: o /i aceita os dois, e o nome evita o
     -- descasamento entre id de client e id de servidor.
     g_game.talk('/i ' .. escolhido.nome .. ', ' .. qtd)
@@ -182,9 +185,7 @@ function init()
 
     montarGrade()
 
-    janela.quantidade:setMinimum(1)
-    janela.quantidade:setMaximum(10000)
-    janela.quantidade:setValue(1)
+    janela.quantidade:setText('1')
 
     janela.busca.onTextChange = function(_, texto)
         buscar(texto)

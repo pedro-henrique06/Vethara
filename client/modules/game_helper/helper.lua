@@ -25,6 +25,7 @@ local abaAtual = 'cura'
 local INTERVALO_TIQUE = 200 -- ms entre verificacoes
 local ESPERA_MAGIA = 1000 -- ms minimo entre falas, por causa do maxMessageBuffer
 local ESPERA_ITEM = 1000
+local ESPERA_ALVO = 500 -- ms minimo entre escolhas de alvo
 local ESPERA_COMIDA = 60000
 
 -- Aparece no rodape da janela. Serve para saber qual build o jogador tem quando
@@ -35,6 +36,7 @@ local ARQUIVO_EXPORTADO = '/assistente.json'
 
 local ultimaMagia = 0
 local ultimoItem = 0
+local ultimoAlvo = 0
 local ultimaComida = 0
 local reconectando = false
 
@@ -71,6 +73,10 @@ local config = {
     -- jogador escolheu, que e como a runa no alvo sempre funcionou. Quem cacar
     -- perto de outros jogadores liga e evita comecar briga sem querer.
     pouparJogadores = { ativo = false },
+    -- Alvo automatico. Desligado por padrao: ligar muda a natureza da
+    -- ferramenta, de assistente para algo mais proximo de bot, e essa e uma
+    -- escolha que cabe a quem joga. O porcento aqui e distancia em quadros.
+    auto = { ativo = false, porcento = 5 },
     mana = { ativo = false, texto = 'utevo lux', porcento = 90 },
     haste = { ativo = false, texto = 'utani hur' },
     comida = { ativo = false },
@@ -132,6 +138,42 @@ end
 -- Uma acao por tique, na ordem de urgencia: curar antes de atacar, atacar antes
 -- de treinar mana, treinar antes de correr. Duas acoes no mesmo tique so
 -- serviriam para gastar o limite de fala mais rapido.
+-- Escolhe o monstro vivo mais proximo quando o jogador nao tem alvo. Jamais
+-- troca o alvo escolhido por ele, e jamais mira jogador: so monstro. Nao anda
+-- ate o alvo — sem perseguicao e sem rota, quem decide para onde ir continua
+-- sendo o jogador.
+local function escolherAlvo(p)
+    if not config.auto.ativo then
+        return
+    end
+    if agora() - ultimoAlvo < ESPERA_ALVO then
+        return
+    end
+
+    local pos = p:getPosition()
+    if not pos then
+        return
+    end
+
+    local melhor, menor
+    for _, c in ipairs(g_map.getSpectators(pos, false) or {}) do
+        if c ~= p and c.isMonster ~= nil and c:isMonster() and not c:isDead() then
+            local cp = c:getPosition()
+            if cp and cp.z == pos.z then
+                local d = math.max(math.abs(cp.x - pos.x), math.abs(cp.y - pos.y))
+                if d <= config.auto.porcento and (not menor or d < menor) then
+                    melhor, menor = c, d
+                end
+            end
+        end
+    end
+
+    if melhor then
+        ultimoAlvo = agora()
+        g_game.attack(melhor)
+    end
+end
+
 local function verificar()
     local p = jogador()
     if not p then
@@ -154,6 +196,12 @@ local function verificar()
                 return
             end
         end
+    end
+
+    -- Sem alvo e com alvo automatico ligado, escolhe um antes de decidir o
+    -- ataque. Com alvo, nao faz nada: o do jogador manda.
+    if not g_game.getAttackingCreature() then
+        escolherAlvo(p)
     end
 
     -- Ataque so existe se o jogador ja escolheu um alvo. O assistente nao
@@ -275,6 +323,10 @@ local function aplicar(salvo)
     mesclarLista(config.itens, salvo.itens)
     mesclarLista(config.runas, salvo.runas)
     mesclarLista(config.ataques, salvo.ataques)
+    if type(salvo.auto) == 'table' then
+        config.auto.ativo = salvo.auto.ativo == true
+        config.auto.porcento = tonumber(salvo.auto.porcento) or config.auto.porcento
+    end
     if type(salvo.pouparJogadores) == 'table' then
         config.pouparJogadores.ativo = salvo.pouparJogadores.ativo == true
     end
@@ -407,17 +459,26 @@ local function ligarLinha(linha, opcoes)
     end
 
     if opcoes.lerPorcento then
-        linha.porcento:setMinimum(1)
-        linha.porcento:setMaximum(100)
-        linha.porcento:setValue(opcoes.lerPorcento())
-        linha.porcento.onValueChange = function(_, v)
-            opcoes.gravarPorcento(v)
-            salvar()
+        local minimo = opcoes.minimo or 1
+        local maximo = opcoes.maximo or 100
+        linha.porcento:setText(tostring(opcoes.lerPorcento()))
+        -- O texto nao e reescrito enquanto se digita: so o valor guardado e
+        -- limitado. Era o SpinBox corrigindo a cada tecla que impedia escrever
+        -- o numero inteiro.
+        linha.porcento.onTextChange = function(_, texto)
+            local n = tonumber(texto)
+            if n then
+                opcoes.gravarPorcento(math.max(minimo, math.min(maximo, math.floor(n))))
+                salvar()
+            end
         end
     end
 
     if opcoes.rotulo then
         linha.rotulo:setText(opcoes.rotulo)
+    end
+    if opcoes.sufixo then
+        linha.sufixo:setText(opcoes.sufixo)
     end
 end
 
@@ -468,6 +529,17 @@ local function ligarTela()
             gravarPorcento = function(v) config.runas[i].porcento = v end
         })
     end
+
+    ligarLinha(ataque.autoAlvo, {
+        rotulo = tr('Escolher monstro ate'),
+        sufixo = tr('quadros'),
+        minimo = 1,
+        maximo = 10,
+        lerAtivo = function() return config.auto.ativo end,
+        gravarAtivo = function(v) config.auto.ativo = v end,
+        lerPorcento = function() return config.auto.porcento end,
+        gravarPorcento = function(v) config.auto.porcento = v end
+    })
 
     ligarLinha(ataque.pouparJogadores, {
         rotulo = tr('Nao atacar jogadores'),

@@ -100,7 +100,7 @@ MainWindow
     text-align: left
     !text: tr('Quantidade')
 
-  SpinBox
+  TextEdit
     id: quantidade
     anchors.left: rotuloQtd.right
     anchors.bottom: parent.bottom
