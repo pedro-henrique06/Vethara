@@ -9,6 +9,14 @@ HelperInfo < Label
   height: 16
   color: #aaaaaa
 
+# Botao de aba. O estado ligado e marcado tambem pela cor, e nao so pelo estado
+# `on`: dependendo do tema do client o `on` de um Button nao muda nada visivel,
+# e a aba selecionada precisa se distinguir em qualquer tema.
+HelperAba < Button
+  height: 22
+  width: 120
+  font: verdana-11px-rounded
+
 # Linha com magia digitada e limiar de porcentagem.
 HelperLinhaMagia < Panel
   height: 26
@@ -122,15 +130,15 @@ HelperLinhaTexto < Panel
 MainWindow
   id: helperWindow
   !text: tr('Assistente')
-  size: 764 340
+  size: 764 396
   @onEscape: modules.game_helper.toggle()
 
-  # ----- coluna da esquerda -----
+  # ----- cabecalho, comum as duas abas -----
   Label
     id: personagem
     anchors.top: parent.top
     anchors.left: parent.left
-    width: 200
+    width: 240
     height: 18
     text-align: left
     font: verdana-11px-rounded
@@ -139,138 +147,243 @@ MainWindow
     id: status
     anchors.top: personagem.bottom
     anchors.left: parent.left
-    width: 200
+    width: 240
     margin-top: 2
 
-  HelperTitulo
-    id: tituloHaste
-    anchors.top: status.bottom
-    anchors.left: parent.left
-    width: 200
-    margin-top: 14
-    !text: tr('Auto haste')
-
-  HelperLinhaTexto
-    id: haste
-    anchors.top: tituloHaste.bottom
-    anchors.left: parent.left
-    width: 200
-    margin-top: 2
-
-  HelperTitulo
-    id: tituloOutros
-    anchors.top: haste.bottom
-    anchors.left: parent.left
-    width: 200
-    margin-top: 14
-    !text: tr('Outras ferramentas')
-
-  HelperLinhaSimples
-    id: comer
-    anchors.top: tituloOutros.bottom
-    anchors.left: parent.left
-    width: 200
-    margin-top: 2
-
-  HelperLinhaSimples
-    id: reconectar
-    anchors.top: comer.bottom
-    anchors.left: parent.left
-    width: 200
-
-  # ----- coluna do meio: magias -----
-  HelperTitulo
-    id: tituloMagias
+  HelperAba
+    id: abaBotaoCura
     anchors.top: parent.top
     anchors.left: personagem.right
     margin-left: 16
-    width: 240
-    !text: tr('Cura por magia')
+    !text: tr('Cura e apoio')
+    @onClick: modules.game_helper.mostrarAba('cura')
 
-  HelperLinhaMagia
-    id: magia1
-    anchors.top: tituloMagias.bottom
-    anchors.left: tituloMagias.left
-    width: 240
-    margin-top: 2
-
-  HelperLinhaMagia
-    id: magia2
-    anchors.top: magia1.bottom
-    anchors.left: tituloMagias.left
-    width: 240
-
-  HelperLinhaMagia
-    id: magia3
-    anchors.top: magia2.bottom
-    anchors.left: tituloMagias.left
-    width: 240
-
-  HelperTitulo
-    id: tituloMana
-    anchors.top: magia3.bottom
-    anchors.left: tituloMagias.left
-    width: 240
-    margin-top: 14
-    !text: tr('Treino de mana (mana acima de)')
-
-  HelperLinhaMagia
-    id: mana
-    anchors.top: tituloMana.bottom
-    anchors.left: tituloMagias.left
-    width: 240
-    margin-top: 2
-
-  # ----- coluna da direita: itens -----
-  HelperTitulo
-    id: tituloItens
+  HelperAba
+    id: abaBotaoAtaque
     anchors.top: parent.top
-    anchors.left: tituloMagias.right
-    margin-left: 16
-    anchors.right: parent.right
-    !text: tr('Cura por item (pocao ou runa)')
+    anchors.left: abaBotaoCura.right
+    margin-left: 4
+    !text: tr('Ataque')
+    @onClick: modules.game_helper.mostrarAba('ataque')
 
-  HelperLinhaItem
-    id: item1
-    anchors.top: tituloItens.bottom
-    anchors.left: tituloItens.left
+  HorizontalSeparator
+    id: separadorAbas
+    anchors.left: parent.left
     anchors.right: parent.right
-    margin-top: 2
+    anchors.top: status.bottom
+    margin-top: 8
 
-  HelperLinhaItem
-    id: item2
-    anchors.top: item1.bottom
-    anchors.left: tituloItens.left
+  # ================= aba: cura e apoio =================
+  #
+  # Painel sem fit-children de proposito. A versao que ajustava a altura ao
+  # conteudo travava o client num laco de layout com a ancora que fixava a
+  # altura; aqui as duas dimensoes vem so das ancoras.
+  Panel
+    id: abaCura
+    anchors.top: separadorAbas.bottom
+    anchors.left: parent.left
     anchors.right: parent.right
+    anchors.bottom: aviso.top
+    margin-top: 10
+    margin-bottom: 6
 
-  HelperLinhaItem
-    id: item3
-    anchors.top: item2.bottom
-    anchors.left: tituloItens.left
+    # ----- coluna da esquerda -----
+    HelperTitulo
+      id: tituloHaste
+      anchors.top: parent.top
+      anchors.left: parent.left
+      width: 200
+      !text: tr('Auto haste')
+
+    HelperLinhaTexto
+      id: haste
+      anchors.top: tituloHaste.bottom
+      anchors.left: parent.left
+      width: 200
+      margin-top: 2
+
+    HelperTitulo
+      id: tituloOutros
+      anchors.top: haste.bottom
+      anchors.left: parent.left
+      width: 200
+      margin-top: 14
+      !text: tr('Outras ferramentas')
+
+    HelperLinhaSimples
+      id: comer
+      anchors.top: tituloOutros.bottom
+      anchors.left: parent.left
+      width: 200
+      margin-top: 2
+
+    HelperLinhaSimples
+      id: reconectar
+      anchors.top: comer.bottom
+      anchors.left: parent.left
+      width: 200
+
+    # ----- coluna do meio: magias -----
+    HelperTitulo
+      id: tituloMagias
+      anchors.top: parent.top
+      anchors.left: tituloHaste.right
+      margin-left: 16
+      width: 240
+      !text: tr('Cura por magia')
+
+    HelperLinhaMagia
+      id: magia1
+      anchors.top: tituloMagias.bottom
+      anchors.left: tituloMagias.left
+      width: 240
+      margin-top: 2
+
+    HelperLinhaMagia
+      id: magia2
+      anchors.top: magia1.bottom
+      anchors.left: tituloMagias.left
+      width: 240
+
+    HelperLinhaMagia
+      id: magia3
+      anchors.top: magia2.bottom
+      anchors.left: tituloMagias.left
+      width: 240
+
+    HelperTitulo
+      id: tituloMana
+      anchors.top: magia3.bottom
+      anchors.left: tituloMagias.left
+      width: 240
+      margin-top: 14
+      !text: tr('Treino de mana (mana acima de)')
+
+    HelperLinhaMagia
+      id: mana
+      anchors.top: tituloMana.bottom
+      anchors.left: tituloMagias.left
+      width: 240
+      margin-top: 2
+
+    # ----- coluna da direita: itens -----
+    HelperTitulo
+      id: tituloItens
+      anchors.top: parent.top
+      anchors.left: tituloMagias.right
+      margin-left: 16
+      anchors.right: parent.right
+      !text: tr('Cura por item (pocao ou runa)')
+
+    HelperLinhaItem
+      id: item1
+      anchors.top: tituloItens.bottom
+      anchors.left: tituloItens.left
+      anchors.right: parent.right
+      margin-top: 2
+
+    HelperLinhaItem
+      id: item2
+      anchors.top: item1.bottom
+      anchors.left: tituloItens.left
+      anchors.right: parent.right
+
+    HelperLinhaItem
+      id: item3
+      anchors.top: item2.bottom
+      anchors.left: tituloItens.left
+      anchors.right: parent.right
+
+  # ================= aba: ataque =================
+  Panel
+    id: abaAtaque
+    anchors.top: separadorAbas.bottom
+    anchors.left: parent.left
     anchors.right: parent.right
+    anchors.bottom: aviso.top
+    margin-top: 10
+    margin-bottom: 6
 
-  HelperTitulo
-    id: tituloRunas
-    anchors.top: item3.bottom
-    anchors.left: tituloItens.left
-    anchors.right: parent.right
-    margin-top: 12
-    !text: tr('Runa no alvo (vida do alvo ate)')
+    # ----- coluna da esquerda: magias de ataque -----
+    HelperTitulo
+      id: tituloAtaques
+      anchors.top: parent.top
+      anchors.left: parent.left
+      width: 300
+      !text: tr('Magia de ataque (mana acima de)')
 
-  HelperLinhaItem
-    id: runa1
-    anchors.top: tituloRunas.bottom
-    anchors.left: tituloItens.left
-    anchors.right: parent.right
-    margin-top: 2
+    HelperLinhaMagia
+      id: ataque1
+      anchors.top: tituloAtaques.bottom
+      anchors.left: parent.left
+      width: 300
+      margin-top: 2
 
-  HelperLinhaItem
-    id: runa2
-    anchors.top: runa1.bottom
-    anchors.left: tituloItens.left
-    anchors.right: parent.right
+    HelperLinhaMagia
+      id: ataque2
+      anchors.top: ataque1.bottom
+      anchors.left: parent.left
+      width: 300
 
-  # ----- rodape -----
+    HelperLinhaMagia
+      id: ataque3
+      anchors.top: ataque2.bottom
+      anchors.left: parent.left
+      width: 300
+
+    HelperTitulo
+      id: tituloLimites
+      anchors.top: ataque3.bottom
+      anchors.left: parent.left
+      width: 300
+      margin-top: 14
+      !text: tr('Limites')
+
+    HelperLinhaSimples
+      id: pouparJogadores
+      anchors.top: tituloLimites.bottom
+      anchors.left: parent.left
+      width: 300
+      margin-top: 2
+
+    # ----- coluna da direita: runas no alvo -----
+    HelperTitulo
+      id: tituloRunas
+      anchors.top: parent.top
+      anchors.left: tituloAtaques.right
+      margin-left: 16
+      anchors.right: parent.right
+      !text: tr('Runa no alvo (vida do alvo ate)')
+
+    HelperLinhaItem
+      id: runa1
+      anchors.top: tituloRunas.bottom
+      anchors.left: tituloRunas.left
+      anchors.right: parent.right
+      margin-top: 2
+
+    HelperLinhaItem
+      id: runa2
+      anchors.top: runa1.bottom
+      anchors.left: tituloRunas.left
+      anchors.right: parent.right
+
+    HelperInfo
+      id: explicacao1
+      anchors.top: runa2.bottom
+      anchors.left: tituloRunas.left
+      anchors.right: parent.right
+      margin-top: 10
+      !text: tr('O assistente nunca escolhe alvo.')
+
+    HelperInfo
+      id: explicacao2
+      anchors.top: explicacao1.bottom
+      anchors.left: tituloRunas.left
+      anchors.right: parent.right
+      !text: tr('Magia e runa so disparam contra quem voce ja ataca.')
+
+  # ----- rodape, comum as duas abas -----
   HelperInfo
     id: aviso
     anchors.left: parent.left

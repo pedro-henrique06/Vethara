@@ -1,6 +1,6 @@
 Module
   name: game_helper
-  description: Assistente do Vethara - cura, treino de mana e utilidades
+  description: Assistente do Vethara - cura, ataque, treino de mana e utilidades
   author: Vethara
   sandboxed: true
   scripts: [ helper ]
