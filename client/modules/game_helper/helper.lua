@@ -1,10 +1,10 @@
 -- Assistente do Vethara.
 --
--- Equivalente ao helper oficial do Rubinot: uma tela fechada com cura por magia,
--- cura por item, runa no alvo, treino de mana e utilidades. Nao e um bot de
--- scripts — nao anda, nao procura alvo, nao coleta. So automatiza o que o jogador
--- faria apertando teclas, e a runa de ataque so dispara contra o alvo que ele
--- mesmo escolheu.
+-- Equivalente ao helper oficial do Rubinot, em duas abas: "Cura e apoio" traz
+-- cura por magia, cura por item, treino de mana e utilidades; "Ataque" traz
+-- magia de ataque e runa no alvo. Nao e um bot de scripts — nao anda, nao
+-- procura alvo, nao coleta. So automatiza o que o jogador faria apertando
+-- teclas, e nada da aba de ataque dispara sem um alvo que ele mesmo escolheu.
 --
 -- O intervalo minimo entre acoes existe por um motivo concreto: magia e enviada
 -- como fala, e o servidor corta com maxMessageBuffer = 4. Sem o limite, o
@@ -20,6 +20,7 @@ local botaoTopo = nil
 local tique = nil
 local pegadorMouse = nil
 local slotEscolhendo = nil
+local abaAtual = 'cura'
 
 local INTERVALO_TIQUE = 200 -- ms entre verificacoes
 local ESPERA_MAGIA = 1000 -- ms minimo entre falas, por causa do maxMessageBuffer
@@ -28,7 +29,7 @@ local ESPERA_COMIDA = 60000
 
 -- Aparece no rodape da janela. Serve para saber qual build o jogador tem quando
 -- ele reporta alguma coisa, e para conferir de relance se a atualizacao chegou.
-local VERSAO = '1.0'
+local VERSAO = '1.1'
 
 local ARQUIVO_EXPORTADO = '/assistente.json'
 
@@ -58,6 +59,18 @@ local config = {
         { ativo = false, id = 0, porcento = 100 },
         { ativo = false, id = 0, porcento = 100 }
     },
+    -- Magias de ataque, tambem contra o alvo ja escolhido. O porcento aqui e
+    -- piso de mana, e nao vida: sem ele o ataque gasta a mana de que a cura vai
+    -- precisar, e o jogador morre com a barra de mana zerada.
+    ataques = {
+        { ativo = false, texto = 'exori vis', porcento = 40 },
+        { ativo = false, texto = 'exori frigo', porcento = 40 },
+        { ativo = false, texto = '', porcento = 40 }
+    },
+    -- Desligado por padrao: assim o assistente segue respeitando o alvo que o
+    -- jogador escolheu, que e como a runa no alvo sempre funcionou. Quem cacar
+    -- perto de outros jogadores liga e evita comecar briga sem querer.
+    pouparJogadores = { ativo = false },
     mana = { ativo = false, texto = 'utevo lux', porcento = 90 },
     haste = { ativo = false, texto = 'utani hur' },
     comida = { ativo = false },
@@ -143,14 +156,25 @@ local function verificar()
         end
     end
 
-    -- Runa de ataque so existe se o jogador ja escolheu um alvo. O assistente
-    -- nao procura alvo nenhum.
+    -- Ataque so existe se o jogador ja escolheu um alvo. O assistente nao
+    -- procura alvo nenhum e nao troca o que voce escolheu -- vem depois da cura
+    -- de proposito: com pouca vida, curar ganha do dano.
     local alvo = g_game.getAttackingCreature()
-    if alvo then
+    local ehJogador = alvo ~= nil and alvo.isPlayer ~= nil and alvo:isPlayer()
+    if alvo and not (config.pouparJogadores.ativo and ehJogador) then
         local vidaAlvo = alvo:getHealthPercent()
         for _, r in ipairs(config.runas) do
             if r.ativo and r.id > 0 and vidaAlvo <= r.porcento then
                 if usarItem(r.id, alvo) then
+                    return
+                end
+            end
+        end
+
+        local mana = porcentoMana(p)
+        for _, a in ipairs(config.ataques) do
+            if a.ativo and mana >= a.porcento then
+                if castar(a.texto) then
                     return
                 end
             end
@@ -187,6 +211,9 @@ local function quantosAtivos()
     end
     for _, r in ipairs(config.runas) do
         if r.ativo then n = n + 1 end
+    end
+    for _, a in ipairs(config.ataques) do
+        if a.ativo then n = n + 1 end
     end
     if config.mana.ativo then n = n + 1 end
     if config.haste.ativo then n = n + 1 end
@@ -247,6 +274,10 @@ local function aplicar(salvo)
     mesclarLista(config.magias, salvo.magias)
     mesclarLista(config.itens, salvo.itens)
     mesclarLista(config.runas, salvo.runas)
+    mesclarLista(config.ataques, salvo.ataques)
+    if type(salvo.pouparJogadores) == 'table' then
+        config.pouparJogadores.ativo = salvo.pouparJogadores.ativo == true
+    end
     if type(salvo.mana) == 'table' then
         config.mana.ativo = salvo.mana.ativo == true
         config.mana.texto = salvo.mana.texto or config.mana.texto
@@ -391,8 +422,13 @@ local function ligarLinha(linha, opcoes)
 end
 
 local function ligarTela()
+    -- Os widgets agora vivem dentro do painel da aba, e nao mais soltos na
+    -- janela. Um salto por vez: cada acesso resolve um filho direto.
+    local cura = janela.abaCura
+    local ataque = janela.abaAtaque
+
     for i = 1, 3 do
-        ligarLinha(janela['magia' .. i], {
+        ligarLinha(cura['magia' .. i], {
             lerAtivo = function() return config.magias[i].ativo end,
             gravarAtivo = function(v) config.magias[i].ativo = v end,
             lerTexto = function() return config.magias[i].texto end,
@@ -401,7 +437,7 @@ local function ligarTela()
             gravarPorcento = function(v) config.magias[i].porcento = v end
         })
 
-        ligarLinha(janela['item' .. i], {
+        ligarLinha(cura['item' .. i], {
             lerAtivo = function() return config.itens[i].ativo end,
             gravarAtivo = function(v) config.itens[i].ativo = v end,
             lerItem = function() return config.itens[i].id end,
@@ -411,8 +447,19 @@ local function ligarTela()
         })
     end
 
+    for i = 1, 3 do
+        ligarLinha(ataque['ataque' .. i], {
+            lerAtivo = function() return config.ataques[i].ativo end,
+            gravarAtivo = function(v) config.ataques[i].ativo = v end,
+            lerTexto = function() return config.ataques[i].texto end,
+            gravarTexto = function(t) config.ataques[i].texto = t end,
+            lerPorcento = function() return config.ataques[i].porcento end,
+            gravarPorcento = function(v) config.ataques[i].porcento = v end
+        })
+    end
+
     for i = 1, 2 do
-        ligarLinha(janela['runa' .. i], {
+        ligarLinha(ataque['runa' .. i], {
             lerAtivo = function() return config.runas[i].ativo end,
             gravarAtivo = function(v) config.runas[i].ativo = v end,
             lerItem = function() return config.runas[i].id end,
@@ -422,7 +469,13 @@ local function ligarTela()
         })
     end
 
-    ligarLinha(janela.mana, {
+    ligarLinha(ataque.pouparJogadores, {
+        rotulo = tr('Nao atacar jogadores'),
+        lerAtivo = function() return config.pouparJogadores.ativo end,
+        gravarAtivo = function(v) config.pouparJogadores.ativo = v end
+    })
+
+    ligarLinha(cura.mana, {
         lerAtivo = function() return config.mana.ativo end,
         gravarAtivo = function(v) config.mana.ativo = v end,
         lerTexto = function() return config.mana.texto end,
@@ -431,24 +484,43 @@ local function ligarTela()
         gravarPorcento = function(v) config.mana.porcento = v end
     })
 
-    ligarLinha(janela.haste, {
+    ligarLinha(cura.haste, {
         lerAtivo = function() return config.haste.ativo end,
         gravarAtivo = function(v) config.haste.ativo = v end,
         lerTexto = function() return config.haste.texto end,
         gravarTexto = function(t) config.haste.texto = t end
     })
 
-    ligarLinha(janela.comer, {
+    ligarLinha(cura.comer, {
         rotulo = tr('Comer a cada 60 segundos'),
         lerAtivo = function() return config.comida.ativo end,
         gravarAtivo = function(v) config.comida.ativo = v end
     })
 
-    ligarLinha(janela.reconectar, {
+    ligarLinha(cura.reconectar, {
         rotulo = tr('Reconectar se a conexao cair'),
         lerAtivo = function() return config.reconectar.ativo end,
         gravarAtivo = function(v) config.reconectar.ativo = v end
     })
+end
+
+-- Troca de aba: os dois paineis existem sempre, e so a visibilidade muda. Alem
+-- do estado `on`, a aba escolhida muda de cor -- em alguns temas o `on` de um
+-- Button nao pinta nada, e ai nao daria para saber onde se esta.
+function mostrarAba(nome)
+    if not janela then
+        return
+    end
+    abaAtual = (nome == 'ataque') and 'ataque' or 'cura'
+    local ehCura = abaAtual == 'cura'
+
+    janela.abaCura:setVisible(ehCura)
+    janela.abaAtaque:setVisible(not ehCura)
+
+    janela.abaBotaoCura:setOn(ehCura)
+    janela.abaBotaoAtaque:setOn(not ehCura)
+    janela.abaBotaoCura:setColor(ehCura and '#f0ad4d' or '#c0c0c0')
+    janela.abaBotaoAtaque:setColor(ehCura and '#c0c0c0' or '#f0ad4d')
 end
 
 function exportar()
@@ -476,6 +548,7 @@ function importar()
     end
     aplicar(dados)
     ligarTela()
+    mostrarAba(abaAtual)
     salvar()
     modules.game_textmessage.displayStatusMessage(tr('Assistente importado'))
 end
@@ -539,6 +612,7 @@ function init()
     janela.versao:setText(tr('Assistente') .. ' ' .. VERSAO)
     aplicar(g_settings.getNode('vethara_helper'))
     ligarTela()
+    mostrarAba(abaAtual)
     atualizarCabecalho()
 
     -- Mesma barra e mesmo icone do bot antigo, que foi desligado no mods.otmod.

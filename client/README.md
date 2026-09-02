@@ -13,18 +13,22 @@ para este repositorio.
 
 ## Assistente
 
-Equivalente ao helper oficial do Rubinot: cura por magia, cura por item, runa no
-alvo, treino de mana, auto haste, comer e reconectar. Abre pelo botao da barra do
-`game_mainpanel` — o mesmo que era do bot antigo.
+Equivalente ao helper oficial do Rubinot, em duas abas. Abre pelo botao da barra
+do `game_mainpanel` — o mesmo que era do bot antigo.
+
+| Aba | O que tem |
+| --- | --- |
+| **Cura e apoio** | cura por magia, cura por item, treino de mana, auto haste, comer e reconectar |
+| **Ataque** | magia de ataque com piso de mana, runa no alvo por vida do alvo, e o limite de nao atacar jogadores |
 
 Os itens sao escolhidos da mochila, e nao de uma lista: arraste para o quadro, ou
 use Escolher e aponte. Botao direito no quadro limpa. Assim qualquer item do
 servidor serve, inclusive item custom.
 
 Nao e um bot de scripts — nao anda, nao procura alvo, nao coleta. So automatiza o
-que o jogador faria apertando teclas, e a runa de ataque so dispara contra o alvo
-que ele mesmo escolheu. Por isso e uma ferramenta do servidor, e nao algo que ele
-precise coibir.
+que o jogador faria apertando teclas, e **nada da aba de ataque dispara sem um
+alvo que ele mesmo escolheu**. Por isso e uma ferramenta do servidor, e nao algo
+que ele precise coibir.
 
 ### Decisoes que valem registro
 
@@ -38,6 +42,20 @@ mais rapido sem chegar antes em lugar nenhum.
 
 **Reconexao com atraso e uma tentativa por queda.** Reconectar em laco
 transformaria um kick por regra numa enxurrada de logins.
+
+**Cura ganha do ataque, sempre.** A verificacao roda a cura antes do ataque, e a
+magia de ataque tem piso de mana proprio. Sem isso, o ataque gastaria a mana de
+que a cura vai precisar e o jogador morreria com a barra de mana no chao.
+
+**Ataque nao escolhe alvo, e o filtro de jogador vem desligado.** A runa no alvo
+sempre disparou contra quem o jogador estivesse atacando; manter o padrao evita
+mudar em silencio o comportamento de quem ja usava. Quem caca perto de outros
+jogadores liga "Nao atacar jogadores" e o assistente ignora alvo humano.
+
+**As duas abas sao dois paineis fixos, e so a visibilidade muda.** Nao ha widget
+criado em tempo de execucao — a mesma razao pela qual a tela inteira e estatica
+(ver abaixo). A aba escolhida tambem muda de cor, porque em alguns temas o estado
+`on` de um botao nao pinta nada.
 
 ### Instalar para testar
 
