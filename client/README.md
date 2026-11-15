@@ -8,6 +8,7 @@ para este repositorio.
 | --- | --- |
 | `init.lua` | aponta o client para `https://vethara.com.br/login` |
 | `modules/game_helper/` | o Assistente |
+| `modules/game_gm/` | o menu de GM, que cria itens pelo nome |
 | `build-vethara.bat` | script de compilacao, e do instalador |
 | `instalador.iss` | script do Inno Setup que gera o VetharaSetup.exe |
 | `mods/client_mods/mods.otmod` | lista de mods, sem o bot antigo |
@@ -118,6 +119,119 @@ onde estava — o que muda e o que ele abre.
 
 Para trazer o bot de volta, basta devolver `- game_bot` aquela lista: a pasta do
 mod continua intacta no checkout do otclient, so nao e distribuida.
+
+## O updater e o certificado
+
+Vale registrar porque o sintoma aponta para o lugar errado com muita forca, e
+porque o conserto exige recompilar — entao e facil alguem refazer a investigacao
+inteira do zero.
+
+**Sintoma.** No boot, o updater abre uma caixa de erro:
+
+```
+Cannot connect to url: https://vethara.com.br/api/updater
+error : error in handshake : X509 - Certificate verification failed, e.g. CRL, CA or signature check failed
+```
+
+O site abre normalmente no navegador, e **o login no jogo funciona**. So o
+updater falha.
+
+### A causa
+
+O client tem **duas** implementacoes de HTTPS, e so uma recebe lista de CAs:
+
+| | Biblioteca | CA configurada | Resultado |
+| --- | --- | --- | --- |
+| Login | cpp-httplib | `./cacert.pem`, em `src/framework/net/httplogin.cpp` | funciona |
+| `g_http` (updater) | IXWebSocket + mbedTLS | nenhuma | falha sempre |
+
+O `ix::SocketTLSOptions` tem `caFile = "SYSTEM"` por padrao. O comentario do
+proprio header diz que isso significa "leverage the system defaults" — mas com
+mbedTLS no Windows esse "SYSTEM" nao resolve para lista nenhuma. Nenhuma CA e
+carregada, e **toda** verificacao falha, com qualquer certificado.
+
+O `g_ixHttpClient` e criado em `Http::init()` e nunca recebe `setTLSOptions`.
+
+### O patch
+
+Em `src/framework/net/protocolhttp.cpp`, no bloco nativo (`#else`), junto do
+`#include <ixwebsocket/IXNetSystem.h>`:
+
+```cpp
+#include <ixwebsocket/IXSocketTLSOptions.h>
+```
+
+Depois do `std::shared_ptr<ix::HttpClient> g_ixHttpClient;`:
+
+```cpp
+// O IXWebSocket usa mbedTLS no Windows, e SocketTLSOptions::caFile vem como
+// "SYSTEM" por padrao — que ali nao resolve para lista de CAs nenhuma. Sem
+// isto, toda verificacao de certificado falha. O httplogin.cpp ja aponta o
+// mesmo arquivo com set_ca_cert_path; e por isso que o login funciona e o
+// updater nao.
+static ix::SocketTLSOptions vetharaTlsOptions()
+{
+    ix::SocketTLSOptions options;
+    options.caFile = "./cacert.pem";
+    return options;
+}
+```
+
+Em `Http::init()`:
+
+```cpp
+    if (!g_ixHttpClient) {
+        g_ixHttpClient = std::make_shared<ix::HttpClient>(true);
+        g_ixHttpClient->setTLSOptions(vetharaTlsOptions());
+    }
+```
+
+E no websocket, logo depois do `make_shared`:
+
+```cpp
+    auto websocket = std::make_shared<ix::WebSocket>();
+    websocket->setTLSOptions(vetharaTlsOptions());
+    websocket->setUrl(url);
+```
+
+O caminho e relativo (`./cacert.pem`), igual ao do `httplogin.cpp`, entao depende
+do diretorio de trabalho ser o da instalacao. E a mesma exposicao que o login ja
+tem hoje; se um dia um deles quebrar por atalho com "Iniciar em" diferente, os
+dois quebram junto e vale trocar os dois por caminho absoluto.
+
+### O que foi descartado no caminho
+
+Util para nao repetir:
+
+**Nao e o servidor.** O job de deploy faz `curl` com verificacao TLS completa em
+`/api/saude` de um runner do GitHub e recebe 200. Certificado valido, cadeia
+fechando.
+
+**Nao e a raiz do certificado.** A cadeia do Let's Encrypt foi trocada de ECDSA
+(ISRG Root X2) para RSA (ISRG Root X1) pelo `key_type rsa2048` no Caddyfile, e o
+erro continuou identico. O `cacert.pem` que acompanha o client tem 127
+certificados e **tem** a ISRG Root X1.
+
+**Nao e `SSL_CERT_FILE`.** Essa variavel so vale para OpenSSL. A mensagem de erro
+e texto literal do mbedTLS, que a ignora.
+
+**Nao e o `cacert.pem` faltando.** Ele esta na raiz da instalacao, com 201 KB.
+
+### Como diagnosticar
+
+**Logar funcionar e o sinal que importa.** Se o login entra e o updater falha com
+erro de certificado, o problema nao e certificado — e configuracao diferente
+entre as duas pilhas HTTP do client. Nao adianta mexer no servidor.
+
+**Rodar o client de dentro do zip produz o mesmo erro, por outro motivo.** O
+Windows extrai so o `otclient.exe` para uma pasta em `%TEMP%`, sem o
+`cacert.pem` e sem os modulos. Antes de investigar qualquer coisa, confira de
+onde o client esta rodando: `vethara.log` fica no diretorio de trabalho, e se
+nao existe nenhum, provavelmente e isso.
+
+**O updater nao pode usar `http://`.** O `updater.lua` chama
+`g_resources.updateExecutable(binary)` — ele substitui o executavel. Em HTTP
+puro, qualquer um na rede entrega um exe no lugar. Nao e atalho aceitavel.
 
 ## O travamento do fit-children
 
