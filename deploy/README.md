@@ -9,6 +9,27 @@ servidor vem como imagem Docker.
 - Um **domínio já apontando para o IP do VPS** (registro A). O Caddy só consegue emitir
   o certificado se o DNS já estiver propagado.
 
+## Atalho: um comando so
+
+Numa VPS Ubuntu recem-criada, o `deploy/instalar-vps.sh` faz os passos 1 a 3
+desta pagina de uma vez — Docker, usuario do deploy, clone, `.env` e `subir.sh`:
+
+```bash
+ssh root@IP_DA_VPS
+curl -fsSL https://raw.githubusercontent.com/pedro-henrique06/Vethara/main/deploy/instalar-vps.sh -o instalar-vps.sh
+bash instalar-vps.sh vethara.com.br
+```
+
+Ele pode ser rodado de novo sem medo: cada etapa confere se ja esta feita. O
+`docker/.env` nunca e regerado — senha nova com banco antigo deixaria o servidor
+sem conseguir abrir o proprio banco.
+
+**Aponte o dominio para a VPS antes de rodar.** O Caddy so emite o certificado
+se o registro A ja resolver para esta maquina; sem isso o stack sobe, mas sem
+HTTPS, e o Caddy fica tentando ate o DNS aparecer.
+
+Os passos manuais abaixo continuam valendo, e sao o que o script faz por dentro.
+
 ## 1. Clonar
 
 ```bash
