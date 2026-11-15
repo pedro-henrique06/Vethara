@@ -44,8 +44,20 @@ Em **Settings → Secrets and variables → Actions → New repository secret**:
 | Segredo | Valor |
 | --- | --- |
 | `VPS_SSH_KEY` | conteúdo de `~/.ssh/actions` — a chave **privada**, inteira |
+| `VPS_HOST_KEY` | saída de `ssh-keyscan vethara.com.br` — a chave **pública do servidor** |
 | `VPS_HOST` | `vethara.com.br` |
 | `VPS_USER` | `tibia` |
+
+O `VPS_HOST_KEY` é o que impede o deploy de confiar em quem atender no lugar do
+servidor. Ele fica num segredo, e não fixado no workflow, porque trocar de
+máquina não deveria exigir commit: antes, uma VPS nova derrubava o deploy com
+`Host key verification failed` até alguém lembrar de editar aquela linha.
+
+Gere na VPS e copie a saída inteira:
+
+```bash
+ssh-keyscan vethara.com.br
+```
 
 ```bash
 cat ~/.ssh/actions
@@ -184,3 +196,16 @@ servindo outra coisa. Confira no VPS:
 cat ~/Vethara/download/versao.json
 ls -la ~/Vethara/download/
 ```
+
+## Trocar de servidor
+
+Quando a máquina muda — VPS nova, reinstalação, migração — nada no repositório
+precisa mudar. São quatro segredos, e três deles já existem:
+
+1. crie a chave do Actions na máquina nova e prenda ao `command=` (passo 2);
+2. atualize `VPS_SSH_KEY` com a nova chave privada;
+3. atualize `VPS_HOST_KEY` com `ssh-keyscan` da máquina nova;
+4. confira `VPS_HOST` e `VPS_USER`.
+
+O próximo push na `main` publica. Se algum segredo faltar, o job falha dizendo
+qual — e não a meio caminho, com o servidor num estado indefinido.
