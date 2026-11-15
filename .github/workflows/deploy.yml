@@ -43,31 +43,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: producao
     steps:
-      - name: Preparar o acesso SSH
-        env:
-          CHAVE: ${{ secrets.VPS_SSH_KEY }}
-          CHAVE_HOST: ${{ secrets.VPS_HOST_KEY }}
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$CHAVE" > ~/.ssh/deploy
-          chmod 600 ~/.ssh/deploy
+      # Checkout so para alcancar a composite action local. O job nao usa mais
+      # nada do repositorio.
+      - uses: actions/checkout@v4
 
-          # A chave publica do host fica num segredo, e nao fixada aqui. Continua
-          # sendo pinagem — aceitar o que o servidor apresentar na hora tornaria
-          # o deploy vulneravel a quem conseguisse se passar por ele —, mas
-          # trocar de maquina deixa de exigir commit no workflow. Antes, uma VPS
-          # nova derrubava o deploy com "Host key verification failed" ate
-          # alguem lembrar de editar esta linha.
-          #
-          # Gere o valor na VPS:   ssh-keyscan vethara.com.br
-          # e confira o que gravou: ssh-keygen -lf ~/.ssh/known_hosts
-          if [ -z "$CHAVE_HOST" ]; then
-            echo "O segredo VPS_HOST_KEY nao esta definido." >&2
-            echo "Rode 'ssh-keyscan SEU_HOST' e guarde a saida nesse segredo — ver deploy/CICD.md." >&2
-            exit 1
-          fi
-          printf '%s\n' "$CHAVE_HOST" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+      - name: Preparar o acesso SSH
+        uses: ./.github/actions/acesso-vps
+        with:
+          chave: ${{ secrets.VPS_SSH_KEY }}
+          chave_host: ${{ secrets.VPS_HOST_KEY }}
 
       - name: Disparar o deploy
         env:
