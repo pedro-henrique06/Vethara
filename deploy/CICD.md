@@ -86,10 +86,21 @@ do front roda o `tsc`, então erro de tipo também reprova.
 O segundo espera o primeiro terminar — cancelar no meio de um `docker compose up`
 seria pior que enfileirar.
 
-**Chave do host fixada** no workflow, em vez de `ssh-keyscan`. Buscar a chave na
-hora aceita o que o servidor apresentar, e isso confia em quem atender. A que está
-fixada tem o fingerprint `SHA256:WdmPWG2mw70lcsAKoBY1aIAFnYJFdreGnobi35eZ85E`,
-o mesmo que aparece quando você conecta por SSH.
+**Chave do host fixada**, em vez de `ssh-keyscan` na hora. Buscar a chave no
+momento da conexão aceita o que o servidor apresentar, e isso é confiar em quem
+atender. A chave vem do segredo `VPS_HOST_KEY` — continua sendo pinagem, mas
+trocar de máquina deixa de exigir commit. O job imprime o fingerprint do que
+gravou, e ele tem que bater com o que aparece quando você conecta por SSH.
+
+**Um lugar só para o acesso SSH.** Gravar a chave e fixar o host vive em
+`.github/actions/acesso-vps/`, e `Deploy` e `Publicar client` chamam de lá. Esse
+bloco já esteve copiado byte a byte nos dois workflows, e mudar a regra de SSH
+exigia lembrar de editar os dois.
+
+**Workflows separados de propósito.** `CI` não declara `environment:`, então não
+alcança `VPS_SSH_KEY` nem `VPS_HOST_KEY` — um job que roda em pull request não
+tem como tocar na chave do seu servidor. Juntar as três esteiras num workflow só
+trocaria essa barreira por um `if:`.
 
 **`git merge --ff-only`** no VPS. Se alguém editou arquivos direto no servidor,
 o deploy para em vez de criar um merge silencioso que ninguém revisou.

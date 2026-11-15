@@ -1,0 +1,60 @@
+name: Acesso SSH ao VPS
+description: >
+  Grava a chave de deploy e fixa a chave publica do host, para os jobs que
+  precisam falar com o VPS por SSH.
+
+# Este passo estava copiado byte a byte em deploy.yml e publicar-client.yml.
+# Aqui ele vive num lugar so: mudar a regra de SSH deixa de ser "lembrar de
+# editar dois arquivos".
+#
+# Os workflows continuam separados de proposito. O CI nao tem environment e
+# por isso nao alcanca estes segredos; juntar tudo num workflow so trocaria
+# essa barreira por um `if:`.
+
+inputs:
+  chave:
+    description: 'Conteudo do segredo VPS_SSH_KEY — a chave privada de deploy.'
+    required: true
+  chave_host:
+    description: 'Conteudo do segredo VPS_HOST_KEY — a saida de ssh-keyscan do host.'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Gravar as chaves
+      shell: bash
+      env:
+        # Via env, e nunca interpolado dentro do run: assim o valor nao vira
+        # texto de shell.
+        CHAVE: ${{ inputs.chave }}
+        CHAVE_HOST: ${{ inputs.chave_host }}
+      run: |
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+
+        if [ -z "$CHAVE" ]; then
+          echo "O segredo VPS_SSH_KEY nao esta definido." >&2
+          exit 1
+        fi
+        printf '%s\n' "$CHAVE" > ~/.ssh/deploy
+        chmod 600 ~/.ssh/deploy
+
+        # A chave publica do host fica num segredo, e nao fixada no workflow.
+        # Continua sendo pinagem — aceitar o que o servidor apresentar na hora
+        # tornaria o deploy vulneravel a quem conseguisse se passar por ele —,
+        # mas trocar de maquina deixa de exigir commit. Antes, uma VPS nova
+        # derrubava o deploy com "Host key verification failed" ate alguem
+        # lembrar de editar a linha fixa.
+        #
+        # Gere o valor na VPS:   ssh-keyscan vethara.com.br
+        # e confira o que gravou: ssh-keygen -lf ~/.ssh/known_hosts
+        if [ -z "$CHAVE_HOST" ]; then
+          echo "O segredo VPS_HOST_KEY nao esta definido." >&2
+          echo "Rode 'ssh-keyscan SEU_HOST' e guarde a saida nesse segredo — ver deploy/CICD.md." >&2
+          exit 1
+        fi
+        printf '%s\n' "$CHAVE_HOST" > ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+
+        echo "Chave de deploy gravada e host fixado:"
+        ssh-keygen -lf ~/.ssh/known_hosts
