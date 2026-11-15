@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const ARQUIVO = '/download/vethara-client.zip'
+const ZIP = '/download/vethara-client.zip'
+const INSTALADOR = '/download/VetharaSetup.exe'
 
-type Versao = {
-  versao: string
+type Arquivo = {
+  arquivo: string
   tamanho: number
   sha256: string
+}
+
+type Versao = Arquivo & {
+  versao: string
   publicado: string
+  // Presente so nos releases que trazem o instalador. Releases antigos tem
+  // apenas o zip, e a pagina continua funcionando com eles.
+  instalador?: Arquivo
 }
 
 // Escrito pelo deploy/publicar-client.sh no VPS a cada release. Ler daqui, em
@@ -29,15 +37,21 @@ function useVersao() {
   return versao
 }
 
+const megabytes = (bytes: number) => Math.round(bytes / 1048576)
+
 const PASSOS = [
-  ['Baixe o pacote', 'Um zip só, com os arquivos gráficos já dentro. Não há download extra depois da primeira abertura.'],
-  ['Descompacte a pasta inteira', 'Rodar o executável de dentro do zip não funciona: ele precisa dos arquivos ao lado.'],
-  ['Execute otclient.exe', 'Crie sua conta pelo site e entre com o mesmo e-mail e senha.'],
+  ['Baixe o instalador', 'Um executável só. Não precisa descompactar nada.'],
+  ['Dois cliques e avançar', 'Ele instala na sua pasta de usuário, cria o atalho e abre o jogo no fim.'],
+  ['Entre com a sua conta', 'Crie a conta pelo site e use o mesmo e-mail e senha no jogo.'],
 ]
 
 export default function Download() {
   const versao = useVersao()
-  const megabytes = versao ? Math.round(versao.tamanho / 1048576) : null
+
+  // Enquanto o versao.json nao carrega, a pagina ja oferece o instalador: e o
+  // caminho recomendado, e o link e estatico. Os detalhes (tamanho, hash)
+  // aparecem quando o arquivo chega.
+  const temInstalador = !versao || versao.instalador !== undefined
 
   return (
     <>
@@ -48,9 +62,15 @@ export default function Download() {
           Um fork do OTClient, já configurado para o nosso servidor. Windows 64 bits.
         </p>
         <div className="acoes">
-          <a className="botao" href={ARQUIVO}>
-            Baixar{megabytes ? ` · ${megabytes} MB` : ''}
-          </a>
+          {temInstalador ? (
+            <a className="botao" href={INSTALADOR}>
+              Baixar{versao?.instalador ? ` · ${megabytes(versao.instalador.tamanho)} MB` : ''}
+            </a>
+          ) : (
+            <a className="botao" href={ZIP}>
+              Baixar{versao ? ` · ${megabytes(versao.tamanho)} MB` : ''}
+            </a>
+          )}
           <Link className="botao vazado" to="/criar-conta">Criar conta</Link>
         </div>
         {versao && (
@@ -75,6 +95,19 @@ export default function Download() {
       </section>
 
       <section className="secao">
+        <div className="secao-topo"><h2>Na primeira vez que abrir</h2></div>
+        <div className="painel">
+          <p className="guia" style={{ marginBottom: 0 }}>
+            O client baixa os arquivos gráficos antes de entrar no jogo — são algumas
+            centenas de megabytes, e acontece uma vez só. Eles não vêm no instalador
+            porque são arquivos da CipSoft, que não podemos redistribuir. Depois disso,
+            o client se atualiza sozinho ao abrir: compara cada arquivo com o servidor
+            e baixa apenas o que mudou.
+          </p>
+        </div>
+      </section>
+
+      <section className="secao">
         <div className="secao-topo"><h2>O aviso do Windows</h2></div>
         <div className="painel">
           <p className="guia">
@@ -89,7 +122,9 @@ export default function Download() {
                 Se quiser conferir que baixou exatamente o que publicamos, compare o SHA-256:
               </p>
               <div className="rolagem" style={{ padding: '0.75rem', background: 'var(--pedra)' }}>
-                <code style={{ fontSize: '0.82rem', color: 'var(--pergaminho-2)' }}>{versao.sha256}</code>
+                <code style={{ fontSize: '0.82rem', color: 'var(--pergaminho-2)' }}>
+                  {(versao.instalador ?? versao).sha256}
+                </code>
               </div>
             </>
           ) : (
@@ -98,6 +133,22 @@ export default function Download() {
               para conferência.
             </p>
           )}
+        </div>
+      </section>
+
+      <section className="secao">
+        <div className="secao-topo"><h2>Prefere o pacote solto?</h2></div>
+        <div className="painel">
+          <p className="guia">
+            O mesmo client em zip, para quem quer escolher a pasta ou já tem uma
+            instalação. Descompacte a pasta inteira antes de abrir — rodar o executável
+            de dentro do zip não funciona, porque ele precisa dos arquivos ao lado.
+          </p>
+          <div className="acoes">
+            <a className="botao p vazado" href={ZIP}>
+              Baixar o zip{versao ? ` · ${megabytes(versao.tamanho)} MB` : ''}
+            </a>
+          </div>
         </div>
       </section>
     </>

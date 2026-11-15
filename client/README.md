@@ -8,7 +8,8 @@ para este repositorio.
 | --- | --- |
 | `init.lua` | aponta o client para `https://vethara.com.br/login` |
 | `modules/game_helper/` | o Assistente |
-| `build-vethara.bat` | script de compilacao |
+| `build-vethara.bat` | script de compilacao, e do instalador |
+| `instalador.iss` | script do Inno Setup que gera o VetharaSetup.exe |
 | `mods/client_mods/mods.otmod` | lista de mods, sem o bot antigo |
 
 ## Assistente
@@ -66,6 +67,44 @@ cp -r client/modules/game_helper ../Vethara/client-modern/modules/
 ```
 
 O modulo tem `autoload: true`, entao carrega sozinho.
+
+## Instalador
+
+O jogador baixa um `VetharaSetup.exe` e da dois cliques. Antes eram tres passos
+— baixar o zip, descompactar a pasta inteira, achar o `otclient.exe` la dentro —
+e o segundo era o que mais gerava duvida, porque rodar o executavel de dentro do
+zip nao funciona.
+
+```bat
+build-vethara.bat 1.2.0
+```
+
+Compila o client e gera `client\Output\VetharaSetup.exe`. Sem a versao na linha
+de comando, so compila, como antes. Precisa do Inno Setup 6 instalado.
+
+O zip continua sendo publicado ao lado, para quem prefere escolher a pasta ou ja
+tem uma instalacao. Anexe os dois ao release; o `deploy/publicar-client.sh` pega
+os dois, e o instalador e opcional — release sem ele publica so o zip.
+
+### Decisoes que valem registro
+
+**Instala em `%LOCALAPPDATA%\Vethara`, nao em Arquivos de Programas.** E o que
+faz a atualizacao automatica funcionar: o updater escreve dentro da pasta do
+client, e sob `Program Files` isso exigiria elevacao a cada boot — ou falharia em
+silencio, deixando o jogador num client velho sem saber.
+
+**Nao traz mecanismo de atualizacao proprio.** O updater do OTClient ja compara o
+CRC32 de cada arquivo com o manifesto de `/api/updater` e baixa so o que mudou. O
+instalador resolve a primeira instalacao; o resto ja funcionava.
+
+**Os arquivos graficos continuam vindo depois.** Sao da CipSoft e nao podem ser
+redistribuidos — por isso estao no `.gitignore` e o `clientAssets` do `init.lua`
+os baixa na primeira abertura. O instalador leva client e modulos; o exe fica
+pequeno e nos ficamos longe de problema de direito autoral.
+
+**O desinstalador apaga a pasta inteira.** Assets e atualizacoes chegam depois da
+instalacao, entao o Inno nao os conhece e os deixaria para tras — centenas de MB
+orfaos.
 
 ## O bot antigo
 
