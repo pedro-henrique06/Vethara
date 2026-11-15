@@ -1,14 +1,22 @@
 -- Menu de GM do Vethara: procurar um item pelo nome e cria-lo.
 --
--- O botao so aparece para quem o servidor liberou. O client nao tem como saber
--- sozinho o grupo da conta — nada no protocolo conta isso —, entao o
--- servidor manda um extended opcode no login (servidor/scripts/menu_gm.lua).
+-- O botao e registrado sempre, no init, igual ao do Assistente. Antes ele
+-- dependia de um extended opcode que o servidor manda no login
+-- (servidor/scripts/menu_gm.lua), e na pratica o botao nunca aparecia: o Canary
+-- so trata a conexao como OTClient quando o client se anuncia com um
+-- operatingSystem >= CLIENTOS_OTCLIENT_LINUX (10), o que depende de
+-- g_game.enableFeature(GameExtendedOpcode) no client base. Sem isso o client se
+-- anuncia como Windows comum e o opcode nunca chega.
 --
--- Isto e conveniencia de interface, e nao seguranca: o menu apenas digita /i, e
--- o /i so funciona para o grupo god. Um jogador comum que forcasse o botao a
--- aparecer nao criaria nada.
+-- Nao dependemos mais dele, mas continuamos escutando: quando chega, serve de
+-- confirmacao no log.
+--
+-- Isto e conveniencia de interface, e nao seguranca. A autoridade e o servidor:
+-- o menu apenas digita /i, e o /i so funciona para o grupo god. Um jogador comum
+-- que abra o menu nao cria nada — o servidor recusa o comando.
 
 local OPCODE_MENU_GM = 55
+local COMANDO_CRIAR = '/vethara-criar'
 local POR_PAGINA = 60
 local MAXIMO_LISTADO = 3000 -- teto de resultados sem busca, para nao varrer tudo a toa
 
@@ -108,9 +116,15 @@ local function criar()
     -- e impede digitar o numero inteiro.
     local qtd = math.floor(tonumber(janela.quantidade:getText()) or 1)
     qtd = math.max(1, math.min(10000, qtd))
-    -- Enviado pelo nome, e nao pelo id: o /i aceita os dois, e o nome evita o
-    -- descasamento entre id de client e id de servidor.
-    g_game.talk('/i ' .. escolhido.nome .. ', ' .. qtd)
+    -- Enviado pelo nome, e nao pelo id: o id do client nao e necessariamente o
+    -- do servidor, e o menu lista nomes.
+    --
+    -- Nao e /i. O /i e groupType("god") e, para quem nao tem esse grupo, o
+    -- Canary nao engole a mensagem: ela sai falada em voz alta, e um jogador
+    -- comum apareceria dizendo "/i magic sword, 1". O comando abaixo
+    -- (servidor/scripts/criar_item.lua) sempre captura a mensagem e faz a
+    -- verificacao de acesso no servidor.
+    g_game.talk(COMANDO_CRIAR .. ' ' .. escolhido.nome .. ', ' .. qtd)
 end
 
 local function montarGrade()
@@ -150,7 +164,7 @@ function toggle()
     end
 end
 
--- Chamado quando o servidor confirma que esta conta tem acesso.
+-- Idempotente: chamado no init e, se ele chegar, tambem pelo opcode.
 local function liberar()
     if botao then
         return
@@ -163,19 +177,21 @@ end
 
 local function aoReceberOpcode(protocol, code, buffer)
     if code == OPCODE_MENU_GM then
+        -- O botao ja esta la. Isto so registra que o caminho do opcode funciona,
+        -- o que e util para saber se vale a pena voltar a confiar nele.
+        g_logger.info('[game_gm] servidor confirmou acesso de GM pelo opcode ' .. OPCODE_MENU_GM)
         liberar()
     end
 end
 
 function onGameEnd()
-    -- O acesso e reavaliado a cada login: se o proximo personagem nao for GM, o
-    -- botao nao deve continuar la.
+    -- O botao e fixo e sobrevive ao logout, como o do Assistente. Aqui so
+    -- fechamos a janela, que nao faz sentido fora do jogo.
     if janela and janela:isVisible() then
         janela:hide()
     end
     if botao then
-        botao:destroy()
-        botao = nil
+        botao:setOn(false)
     end
 end
 
@@ -203,6 +219,8 @@ function init()
         end
     end
     janela.criar.onClick = criar
+
+    liberar()
 
     ProtocolGame.registerExtendedOpcode(OPCODE_MENU_GM, aoReceberOpcode)
     connect(g_game, { onGameEnd = onGameEnd })
