@@ -1,6 +1,29 @@
 # HTTPS automático via Let's Encrypt. O Caddy cuida do certificado e da renovação
 # sozinho — o único requisito é o domínio já apontar para o IP do VPS antes de subir.
 
+{
+	# Certificado com chave RSA, e não a ECDSA que o Caddy usa por padrão.
+	#
+	# O Let's Encrypt emite pelo intermediário que casa com o tipo da chave. Com
+	# ECDSA a cadeia fechava assim:
+	#
+	#     ISRG Root X2  ->  Root YE  ->  YE2  ->  vethara.com.br
+	#
+	# A ISRG Root X2 é a raiz ECDSA, recente. O Windows tem, e por isso o site
+	# abre normalmente no navegador — mas a lista de CAs embutida no client não
+	# tem, e o updater morria no handshake com "X509 - Certificate verification
+	# failed". Site no ar, client sem conseguir atualizar.
+	#
+	# Com RSA a cadeia fecha na ISRG Root X1, que está em praticamente todo
+	# repositório de CAs, inclusive os antigos.
+	#
+	# O conserto é aqui e não no client de propósito: o que quebrou foi o próprio
+	# updater, então uma correção empacotada no client não teria como ser
+	# distribuída por ele — cada jogador teria que reinstalar na mão. Trocando a
+	# cadeia no servidor, todo mundo volta a atualizar sem baixar nada.
+	key_type rsa2048
+}
+
 {$VETHARA_DOMAIN} {
 	encode gzip
 
