@@ -61,10 +61,17 @@ RUN sed -i -e 's/^rateSpawn = .*/rateSpawn = 2/' \
  && ! grep -rq 'needLearn(true)' /canary/data/scripts/spells \
  && echo "ajustes do Vethara aplicados"
 
-# Avisa o client de que a conta pode usar o menu de GM. O client nao tem como
-# saber o grupo sozinho — nada no protocolo conta isso —, entao o servidor manda
-# um extended opcode no login. Scripts em data/scripts sao carregados sozinhos.
-#
-# E conveniencia de interface, nao seguranca: o menu apenas digita /i, e o /i so
-# funciona para o grupo god.
+# Avisa o client de que a conta pode usar o menu de GM, por extended opcode no
+# login. Na pratica esse opcode nao chega: o Canary so trata a conexao como
+# OTClient quando ela se anuncia com operatingSystem >= CLIENTOS_OTCLIENT_LINUX,
+# o que depende de g_game.enableFeature(GameExtendedOpcode) no client base. O
+# botao nao depende mais dele; o script fica porque, se um dia chegar, o client
+# grava no log e a gente sabe. Scripts em data/scripts sao carregados sozinhos,
+# recursivamente.
 COPY scripts/menu_gm.lua /canary/data/scripts/creaturescripts/player/menu_gm.lua
+
+# Comando que o menu de GM usa para criar itens. Nao e o /i: o /i e restrito ao
+# grupo god e, para quem nao tem esse grupo, o Canary nao engole a mensagem —
+# ela sai falada em voz alta. Este comando sempre captura a mensagem e decide
+# aqui dentro quem pode criar.
+COPY scripts/criar_item.lua /canary/data/scripts/talkactions/criar_item.lua

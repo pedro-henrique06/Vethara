@@ -16,6 +16,7 @@
 -- que abra o menu nao cria nada — o servidor recusa o comando.
 
 local OPCODE_MENU_GM = 55
+local COMANDO_CRIAR = '/vethara-criar'
 local POR_PAGINA = 60
 local MAXIMO_LISTADO = 3000 -- teto de resultados sem busca, para nao varrer tudo a toa
 
@@ -115,9 +116,15 @@ local function criar()
     -- e impede digitar o numero inteiro.
     local qtd = math.floor(tonumber(janela.quantidade:getText()) or 1)
     qtd = math.max(1, math.min(10000, qtd))
-    -- Enviado pelo nome, e nao pelo id: o /i aceita os dois, e o nome evita o
-    -- descasamento entre id de client e id de servidor.
-    g_game.talk('/i ' .. escolhido.nome .. ', ' .. qtd)
+    -- Enviado pelo nome, e nao pelo id: o id do client nao e necessariamente o
+    -- do servidor, e o menu lista nomes.
+    --
+    -- Nao e /i. O /i e groupType("god") e, para quem nao tem esse grupo, o
+    -- Canary nao engole a mensagem: ela sai falada em voz alta, e um jogador
+    -- comum apareceria dizendo "/i magic sword, 1". O comando abaixo
+    -- (servidor/scripts/criar_item.lua) sempre captura a mensagem e faz a
+    -- verificacao de acesso no servidor.
+    g_game.talk(COMANDO_CRIAR .. ' ' .. escolhido.nome .. ', ' .. qtd)
 end
 
 local function montarGrade()
